@@ -32,7 +32,7 @@ func (ts Timestamp) Time() time.Time {
 	return ts.t
 }
 
-// String returns the string representation of the Timestamp.
+// String implements the fmt.Stringer interface.
 func (ts Timestamp) String() string {
 	return strconv.FormatInt(ts.t.Unix(), 10)
 }
