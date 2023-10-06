@@ -20,7 +20,7 @@ func Now() Timestamp {
 	}
 }
 
-// Time retuns the Timestamp corresponding to the given time.Time.
+// Time returns the Timestamp corresponding to the given time.Time.
 func Time(t time.Time) Timestamp {
 	return Timestamp{
 		t: t,
