@@ -8,8 +8,8 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 
-	"github.com/m0t0k1ch1-go/timeutil/v2"
-	"github.com/m0t0k1ch1-go/timeutil/v2/internal/testutil"
+	"github.com/m0t0k1ch1-go/timeutil/v3"
+	"github.com/m0t0k1ch1-go/timeutil/v3/internal/testutil"
 )
 
 func TestTimestampValue(t *testing.T) {
