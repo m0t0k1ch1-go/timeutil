@@ -1,4 +1,4 @@
-module github.com/m0t0k1ch1-go/timeutil
+module github.com/m0t0k1ch1-go/timeutil/v2
 
 go 1.21
 

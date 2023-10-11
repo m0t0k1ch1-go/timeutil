@@ -6,8 +6,8 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 
-	"github.com/m0t0k1ch1-go/timeutil"
-	"github.com/m0t0k1ch1-go/timeutil/internal/testutil"
+	"github.com/m0t0k1ch1-go/timeutil/v2"
+	"github.com/m0t0k1ch1-go/timeutil/v2/internal/testutil"
 )
 
 func TestClock(t *testing.T) {
