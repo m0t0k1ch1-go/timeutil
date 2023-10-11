@@ -18,8 +18,8 @@ func Now() Timestamp {
 	return fromTime(time.Now())
 }
 
-// FromTime returns the Timestamp that wraps the given time.Time.
-func FromTime(t time.Time) Timestamp {
+// TimeToTimestamp return the Timestamp that wraps the given time.Time.
+func TimeToTimestamp(t time.Time) Timestamp {
 	return fromTime(t)
 }
 

@@ -21,12 +21,12 @@ func TestTimestampValue(t *testing.T) {
 		}{
 			{
 				"positive",
-				timeutil.FromTime(time.Unix(1231006505, 0)),
+				timeutil.TimeToTimestamp(time.Unix(1231006505, 0)),
 				int64(1231006505),
 			},
 			{
 				"negative",
-				timeutil.FromTime(time.Unix(-1231006505, 0)),
+				timeutil.TimeToTimestamp(time.Unix(-1231006505, 0)),
 				int64(-1231006505),
 			},
 		}
@@ -54,17 +54,17 @@ func TestTimestampScan(t *testing.T) {
 			{
 				name: "positive int64",
 				in:   int64(1231006505),
-				out:  timeutil.FromTime(time.Unix(1231006505, 0)),
+				out:  timeutil.TimeToTimestamp(time.Unix(1231006505, 0)),
 			},
 			{
 				name: "negative int64",
 				in:   int64(-1231006505),
-				out:  timeutil.FromTime(time.Unix(-1231006505, 0)),
+				out:  timeutil.TimeToTimestamp(time.Unix(-1231006505, 0)),
 			},
 			{
 				name: "[]byte",
 				in:   []byte("1231006505"),
-				out:  timeutil.FromTime(time.Unix(1231006505, 0)),
+				out:  timeutil.TimeToTimestamp(time.Unix(1231006505, 0)),
 			},
 		}
 
@@ -90,12 +90,12 @@ func TestTimestampMarshalJSON(t *testing.T) {
 		}{
 			{
 				name: "positive",
-				in:   timeutil.FromTime(time.Unix(1231006505, 0)),
+				in:   timeutil.TimeToTimestamp(time.Unix(1231006505, 0)),
 				out:  []byte("1231006505"),
 			},
 			{
 				name: "negative",
-				in:   timeutil.FromTime(time.Unix(-1231006505, 0)),
+				in:   timeutil.TimeToTimestamp(time.Unix(-1231006505, 0)),
 				out:  []byte("-1231006505"),
 			},
 		}
@@ -123,12 +123,12 @@ func TestTimestampUnmarshalJSON(t *testing.T) {
 			{
 				name: "positive",
 				in:   []byte("1231006505"),
-				out:  timeutil.FromTime(time.Unix(1231006505, 0)),
+				out:  timeutil.TimeToTimestamp(time.Unix(1231006505, 0)),
 			},
 			{
 				name: "negative",
 				in:   []byte("-1231006505"),
-				out:  timeutil.FromTime(time.Unix(-1231006505, 0)),
+				out:  timeutil.TimeToTimestamp(time.Unix(-1231006505, 0)),
 			},
 		}
 
