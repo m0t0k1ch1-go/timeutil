@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/m0t0k1ch1-go/timeutil"
 	"github.com/m0t0k1ch1-go/timeutil/internal/testutil"
 )
@@ -14,28 +15,28 @@ func TestTimestampScan(t *testing.T) {
 		tcs := []struct {
 			name string
 			in   any
-			out  int64
+			out  timeutil.Timestamp
 		}{
 			{
 				name: "int64(1231006505)",
 				in:   int64(1231006505),
-				out:  1231006505,
+				out:  timeutil.Time(time.Unix(1231006505, 0)),
 			},
 			{
 				name: "[]byte(1231006505)",
 				in:   []byte("1231006505"),
-				out:  1231006505,
+				out:  timeutil.Time(time.Unix(1231006505, 0)),
 			},
 		}
 
 		for _, tc := range tcs {
 			t.Run(tc.name, func(t *testing.T) {
-				ts := new(timeutil.Timestamp)
-				if err := ts.Scan(tc.in); err != nil {
+				ts := timeutil.Timestamp{}
+				if err := (&ts).Scan(tc.in); err != nil {
 					t.Fatal(err)
 				}
 
-				testutil.Equal(t, tc.out, ts.Time().Unix())
+				testutil.Equal(t, tc.out, ts, cmp.AllowUnexported(timeutil.Timestamp{}))
 			})
 		}
 	})
@@ -73,12 +74,12 @@ func TestTimestampUnmarshalJSON(t *testing.T) {
 		tcs := []struct {
 			name string
 			in   []byte
-			out  int64
+			out  timeutil.Timestamp
 		}{
 			{
 				name: "1231006505",
 				in:   []byte("1231006505"),
-				out:  1231006505,
+				out:  timeutil.Time(time.Unix(1231006505, 0)),
 			},
 		}
 
@@ -89,7 +90,7 @@ func TestTimestampUnmarshalJSON(t *testing.T) {
 					t.Fatal(err)
 				}
 
-				testutil.Equal(t, tc.out, ts.Time().Unix())
+				testutil.Equal(t, tc.out, ts, cmp.AllowUnexported(timeutil.Timestamp{}))
 			})
 		}
 	})
