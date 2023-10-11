@@ -76,12 +76,12 @@ func TestTimestampMarshalJSON(t *testing.T) {
 		tcs := []struct {
 			name string
 			in   timeutil.Timestamp
-			out  string
+			out  []byte
 		}{
 			{
 				name: "1231006505",
 				in:   timeutil.Time(time.Unix(1231006505, 0)),
-				out:  "1231006505",
+				out:  []byte("1231006505"),
 			},
 		}
 
@@ -92,7 +92,7 @@ func TestTimestampMarshalJSON(t *testing.T) {
 					t.Fatal(err)
 				}
 
-				testutil.Equal(t, tc.out, string(b))
+				testutil.Equal(t, tc.out, b)
 			})
 		}
 	})
