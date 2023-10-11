@@ -9,7 +9,7 @@ import (
 	"github.com/m0t0k1ch1-go/timeutil/internal/testutil"
 )
 
-func TestScan(t *testing.T) {
+func TestTimestampScan(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		tcs := []struct {
 			Name   string
@@ -41,7 +41,7 @@ func TestScan(t *testing.T) {
 	})
 }
 
-func TestMarshalJSON(t *testing.T) {
+func TestTimestampMarshalJSON(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		tcs := []struct {
 			Name   string
@@ -68,7 +68,7 @@ func TestMarshalJSON(t *testing.T) {
 	})
 }
 
-func TestUnmarshalJSON(t *testing.T) {
+func TestTimestampUnmarshalJSON(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		tcs := []struct {
 			Name   string
