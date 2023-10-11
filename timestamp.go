@@ -15,12 +15,12 @@ type Timestamp struct {
 
 // Now returns the current Timestamp.
 func Now() Timestamp {
-	return fromTime(time.Now())
+	return timeToTimestamp(time.Now())
 }
 
 // TimeToTimestamp return the Timestamp that wraps the given time.Time.
 func TimeToTimestamp(t time.Time) Timestamp {
-	return fromTime(t)
+	return timeToTimestamp(t)
 }
 
 // Time returns the wrapped time.Time.
@@ -62,7 +62,7 @@ func (ts *Timestamp) UnmarshalJSON(b []byte) error {
 	return ts.setString(string(b))
 }
 
-func fromTime(t time.Time) Timestamp {
+func timeToTimestamp(t time.Time) Timestamp {
 	ts := Timestamp{}
 	ts.setTime(t)
 
