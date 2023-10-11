@@ -12,30 +12,30 @@ import (
 func TestTimestampScan(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		tcs := []struct {
-			Name   string
-			Input  any
-			Output int64
+			name string
+			in   any
+			out  int64
 		}{
 			{
-				Name:   "int64(1231006505)",
-				Input:  int64(1231006505),
-				Output: 1231006505,
+				name: "int64(1231006505)",
+				in:   int64(1231006505),
+				out:  1231006505,
 			},
 			{
-				Name:   "[]byte(1231006505)",
-				Input:  []byte("1231006505"),
-				Output: 1231006505,
+				name: "[]byte(1231006505)",
+				in:   []byte("1231006505"),
+				out:  1231006505,
 			},
 		}
 
 		for _, tc := range tcs {
-			t.Run(tc.Name, func(t *testing.T) {
+			t.Run(tc.name, func(t *testing.T) {
 				ts := new(timeutil.Timestamp)
-				if err := ts.Scan(tc.Input); err != nil {
+				if err := ts.Scan(tc.in); err != nil {
 					t.Fatal(err)
 				}
 
-				testutil.Equal(t, tc.Output, ts.Time().Unix())
+				testutil.Equal(t, tc.out, ts.Time().Unix())
 			})
 		}
 	})
@@ -44,25 +44,25 @@ func TestTimestampScan(t *testing.T) {
 func TestTimestampMarshalJSON(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		tcs := []struct {
-			Name   string
-			Input  timeutil.Timestamp
-			Output string
+			name string
+			in   timeutil.Timestamp
+			out  string
 		}{
 			{
-				Name:   "1231006505",
-				Input:  timeutil.Time(time.Unix(1231006505, 0)),
-				Output: "1231006505",
+				name: "1231006505",
+				in:   timeutil.Time(time.Unix(1231006505, 0)),
+				out:  "1231006505",
 			},
 		}
 
 		for _, tc := range tcs {
-			t.Run(tc.Name, func(t *testing.T) {
-				b, err := json.Marshal(tc.Input)
+			t.Run(tc.name, func(t *testing.T) {
+				b, err := json.Marshal(tc.in)
 				if err != nil {
 					t.Fatal(err)
 				}
 
-				testutil.Equal(t, tc.Output, string(b))
+				testutil.Equal(t, tc.out, string(b))
 			})
 		}
 	})
@@ -71,25 +71,25 @@ func TestTimestampMarshalJSON(t *testing.T) {
 func TestTimestampUnmarshalJSON(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		tcs := []struct {
-			Name   string
-			Input  []byte
-			Output int64
+			name string
+			in   []byte
+			out  int64
 		}{
 			{
-				Name:   "1231006505",
-				Input:  []byte("1231006505"),
-				Output: 1231006505,
+				name: "1231006505",
+				in:   []byte("1231006505"),
+				out:  1231006505,
 			},
 		}
 
 		for _, tc := range tcs {
-			t.Run(tc.Name, func(t *testing.T) {
+			t.Run(tc.name, func(t *testing.T) {
 				var ts timeutil.Timestamp
-				if err := json.Unmarshal(tc.Input, &ts); err != nil {
+				if err := json.Unmarshal(tc.in, &ts); err != nil {
 					t.Fatal(err)
 				}
 
-				testutil.Equal(t, tc.Output, ts.Time().Unix())
+				testutil.Equal(t, tc.out, ts.Time().Unix())
 			})
 		}
 	})
