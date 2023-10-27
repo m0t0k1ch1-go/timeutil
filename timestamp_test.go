@@ -71,7 +71,7 @@ func TestTimestampScan(t *testing.T) {
 		for _, tc := range tcs {
 			t.Run(tc.name, func(t *testing.T) {
 				ts := timeutil.Timestamp{}
-				if err := (&ts).Scan(tc.in); err != nil {
+				if err := ts.Scan(tc.in); err != nil {
 					t.Fatal(err)
 				}
 
