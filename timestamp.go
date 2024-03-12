@@ -2,6 +2,7 @@ package timeutil
 
 import (
 	"database/sql/driver"
+	"math"
 	"strconv"
 	"time"
 
@@ -41,10 +42,20 @@ func (ts Timestamp) Value() (driver.Value, error) {
 // Scan implements the sql.Scanner interface.
 func (ts *Timestamp) Scan(src any) error {
 	switch v := src.(type) {
+
 	case int64:
 		ts.setUnix(v)
+
+	case uint64:
+		if v > math.MaxInt64 {
+			return errors.Errorf("src must be less than or equal to max value of int64")
+		}
+
+		ts.setUnix(int64(v))
+
 	case []byte:
 		ts.setString(string(v))
+
 	default:
 		return errors.Errorf("unexpected src type: %T", src)
 	}
