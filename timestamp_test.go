@@ -62,6 +62,11 @@ func TestTimestampScan(t *testing.T) {
 				out:  timeutil.TimeToTimestamp(time.Unix(-1231006505, 0)),
 			},
 			{
+				name: "uint64",
+				in:   uint64(1231006505),
+				out:  timeutil.TimeToTimestamp(time.Unix(1231006505, 0)),
+			},
+			{
 				name: "[]byte",
 				in:   []byte("1231006505"),
 				out:  timeutil.TimeToTimestamp(time.Unix(1231006505, 0)),
