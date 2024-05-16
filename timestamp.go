@@ -14,14 +14,14 @@ type Timestamp struct {
 	t time.Time
 }
 
+// NewTimestamp returns a new Timestamp.
+func NewTimestamp(t time.Time) Timestamp {
+	return timeToTimestamp(t)
+}
+
 // Now returns the current Timestamp.
 func Now() Timestamp {
 	return timeToTimestamp(time.Now())
-}
-
-// TimeToTimestamp return the Timestamp that wraps the given time.Time.
-func TimeToTimestamp(t time.Time) Timestamp {
-	return timeToTimestamp(t)
 }
 
 // Time returns the wrapped time.Time.
