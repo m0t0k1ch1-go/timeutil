@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/pkg/errors"
+	"github.com/samber/oops"
 )
 
 // Timestamp is a wrapper for time.Time.
@@ -48,7 +48,7 @@ func (ts *Timestamp) Scan(src any) error {
 
 	case uint64:
 		if v > math.MaxInt64 {
-			return errors.Errorf("src must be less than or equal to max value of int64")
+			return oops.Errorf("src must be less than or equal to max value of int64")
 		}
 
 		ts.setUnix(int64(v))
@@ -57,7 +57,7 @@ func (ts *Timestamp) Scan(src any) error {
 		ts.setString(string(v))
 
 	default:
-		return errors.Errorf("unexpected src type: %T", src)
+		return oops.Errorf("unexpected src type: %T", src)
 	}
 
 	return nil
@@ -99,7 +99,7 @@ func (ts *Timestamp) setUnix(i int64) {
 func (ts *Timestamp) setString(s string) error {
 	i, err := strconv.ParseInt(s, 10, 64)
 	if err != nil {
-		return errors.Wrapf(err, "failed to convert %s into type int64", s)
+		return oops.Wrapf(err, "failed to convert %s into type int64", s)
 	}
 
 	ts.setUnix(i)
