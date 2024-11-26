@@ -6,10 +6,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/google/go-cmp/cmp"
+	"github.com/stretchr/testify/require"
 
 	"github.com/m0t0k1ch1-go/timeutil/v4"
-	"github.com/m0t0k1ch1-go/timeutil/v4/internal/testutil"
 )
 
 func TestTimestampValue(t *testing.T) {
@@ -34,11 +33,9 @@ func TestTimestampValue(t *testing.T) {
 		for _, tc := range tcs {
 			t.Run(tc.name, func(t *testing.T) {
 				v, err := tc.in.Value()
-				if err != nil {
-					t.Fatal(err)
-				}
+				require.Nil(t, err)
 
-				testutil.Equal(t, tc.out, v)
+				require.Equal(t, tc.out, v)
 			})
 		}
 	})
@@ -75,12 +72,10 @@ func TestTimestampScan(t *testing.T) {
 
 		for _, tc := range tcs {
 			t.Run(tc.name, func(t *testing.T) {
-				ts := timeutil.Timestamp{}
-				if err := ts.Scan(tc.in); err != nil {
-					t.Fatal(err)
-				}
+				var ts timeutil.Timestamp
+				require.Nil(t, ts.Scan(tc.in))
 
-				testutil.Equal(t, tc.out, ts, cmp.AllowUnexported(timeutil.Timestamp{}))
+				require.Equal(t, tc.out, ts)
 			})
 		}
 	})
@@ -108,11 +103,9 @@ func TestTimestampMarshalJSON(t *testing.T) {
 		for _, tc := range tcs {
 			t.Run(tc.name, func(t *testing.T) {
 				b, err := json.Marshal(tc.in)
-				if err != nil {
-					t.Fatal(err)
-				}
+				require.Nil(t, err)
 
-				testutil.Equal(t, tc.out, b)
+				require.Equal(t, tc.out, b)
 			})
 		}
 	})
@@ -140,11 +133,9 @@ func TestTimestampUnmarshalJSON(t *testing.T) {
 		for _, tc := range tcs {
 			t.Run(tc.name, func(t *testing.T) {
 				var ts timeutil.Timestamp
-				if err := json.Unmarshal(tc.in, &ts); err != nil {
-					t.Fatal(err)
-				}
+				require.Nil(t, json.Unmarshal(tc.in, &ts))
 
-				testutil.Equal(t, tc.out, ts, cmp.AllowUnexported(timeutil.Timestamp{}))
+				require.Equal(t, tc.out, ts)
 			})
 		}
 	})
