@@ -49,6 +49,10 @@ func TestTimestampScan(t *testing.T) {
 			in   any
 		}{
 			{
+				"nil",
+				nil,
+			},
+			{
 				"string",
 				"1231006505",
 			},
