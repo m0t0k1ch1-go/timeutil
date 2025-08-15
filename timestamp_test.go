@@ -49,16 +49,16 @@ func TestTimestampScan(t *testing.T) {
 			in   any
 		}{
 			{
-				name: "string",
-				in:   "1231006505",
+				"string",
+				"1231006505",
 			},
 			{
-				name: "too large",
-				in:   uint64(math.MaxInt64) + 1,
+				"too large uint64",
+				uint64(math.MaxInt64) + 1,
 			},
 			{
-				name: "invalid bytes",
-				in:   []byte("invalid"),
+				"invalid []byte",
+				[]byte("invalid"),
 			},
 		}
 
@@ -80,24 +80,24 @@ func TestTimestampScan(t *testing.T) {
 			out  timeutil.Timestamp
 		}{
 			{
-				name: "positive int64",
-				in:   int64(1231006505),
-				out:  timeutil.NewTimestamp(time.Unix(1231006505, 0)),
+				"positive int64",
+				int64(1231006505),
+				timeutil.NewTimestamp(time.Unix(1231006505, 0)),
 			},
 			{
-				name: "negative int64",
-				in:   int64(-1231006505),
-				out:  timeutil.NewTimestamp(time.Unix(-1231006505, 0)),
+				"negative int64",
+				int64(-1231006505),
+				timeutil.NewTimestamp(time.Unix(-1231006505, 0)),
 			},
 			{
-				name: "uint64",
-				in:   uint64(1231006505),
-				out:  timeutil.NewTimestamp(time.Unix(1231006505, 0)),
+				"uint64",
+				uint64(1231006505),
+				timeutil.NewTimestamp(time.Unix(1231006505, 0)),
 			},
 			{
-				name: "[]byte",
-				in:   []byte("1231006505"),
-				out:  timeutil.NewTimestamp(time.Unix(1231006505, 0)),
+				"[]byte",
+				[]byte("1231006505"),
+				timeutil.NewTimestamp(time.Unix(1231006505, 0)),
 			},
 		}
 
@@ -123,14 +123,14 @@ func TestTimestampMarshalJSON(t *testing.T) {
 			out  []byte
 		}{
 			{
-				name: "positive",
-				in:   timeutil.NewTimestamp(time.Unix(1231006505, 0)),
-				out:  []byte("1231006505"),
+				"positive",
+				timeutil.NewTimestamp(time.Unix(1231006505, 0)),
+				[]byte("1231006505"),
 			},
 			{
-				name: "negative",
-				in:   timeutil.NewTimestamp(time.Unix(-1231006505, 0)),
-				out:  []byte("-1231006505"),
+				"negative",
+				timeutil.NewTimestamp(time.Unix(-1231006505, 0)),
+				[]byte("-1231006505"),
 			},
 		}
 
@@ -152,8 +152,8 @@ func TestTimestampUnmarshalJSON(t *testing.T) {
 			in   []byte
 		}{
 			{
-				name: "invalid",
-				in:   []byte("invalid"),
+				"invalid",
+				[]byte("invalid"),
 			},
 		}
 
@@ -175,14 +175,14 @@ func TestTimestampUnmarshalJSON(t *testing.T) {
 			out  timeutil.Timestamp
 		}{
 			{
-				name: "positive",
-				in:   []byte("1231006505"),
-				out:  timeutil.NewTimestamp(time.Unix(1231006505, 0)),
+				"positive",
+				[]byte("1231006505"),
+				timeutil.NewTimestamp(time.Unix(1231006505, 0)),
 			},
 			{
-				name: "negative",
-				in:   []byte("-1231006505"),
-				out:  timeutil.NewTimestamp(time.Unix(-1231006505, 0)),
+				"negative",
+				[]byte("-1231006505"),
+				timeutil.NewTimestamp(time.Unix(-1231006505, 0)),
 			},
 		}
 
