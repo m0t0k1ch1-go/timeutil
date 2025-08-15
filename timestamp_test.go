@@ -33,7 +33,7 @@ func TestTimestampValue(t *testing.T) {
 		for _, tc := range tcs {
 			t.Run(tc.name, func(t *testing.T) {
 				v, err := tc.in.Value()
-				require.Nil(t, err)
+				require.NoError(t, err)
 
 				require.Equal(t, tc.out, v)
 			})
@@ -73,7 +73,10 @@ func TestTimestampScan(t *testing.T) {
 		for _, tc := range tcs {
 			t.Run(tc.name, func(t *testing.T) {
 				var ts timeutil.Timestamp
-				require.Nil(t, ts.Scan(tc.in))
+				{
+					err := ts.Scan(tc.in)
+					require.NoError(t, err)
+				}
 
 				require.Equal(t, tc.out, ts)
 			})
@@ -103,7 +106,7 @@ func TestTimestampMarshalJSON(t *testing.T) {
 		for _, tc := range tcs {
 			t.Run(tc.name, func(t *testing.T) {
 				b, err := json.Marshal(tc.in)
-				require.Nil(t, err)
+				require.NoError(t, err)
 
 				require.Equal(t, tc.out, b)
 			})
@@ -133,7 +136,10 @@ func TestTimestampUnmarshalJSON(t *testing.T) {
 		for _, tc := range tcs {
 			t.Run(tc.name, func(t *testing.T) {
 				var ts timeutil.Timestamp
-				require.Nil(t, json.Unmarshal(tc.in, &ts))
+				{
+					err := json.Unmarshal(tc.in, &ts)
+					require.NoError(t, err)
+				}
 
 				require.Equal(t, tc.out, ts)
 			})
