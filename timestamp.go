@@ -46,6 +46,8 @@ func (ts *Timestamp) Scan(src any) error {
 	case int64:
 		ts.setUnix(v)
 
+		return nil
+
 	case uint64:
 		if v > math.MaxInt64 {
 			return oops.New("src must be less than or equal to max value of int64")
@@ -53,14 +55,14 @@ func (ts *Timestamp) Scan(src any) error {
 
 		ts.setUnix(int64(v))
 
+		return nil
+
 	case []byte:
-		ts.setString(string(v))
+		return ts.setString(string(v))
 
 	default:
 		return oops.Errorf("unexpected src type: %T", src)
 	}
-
-	return nil
 }
 
 // MarshalJSON implements the json.Marshaler interface.
