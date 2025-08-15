@@ -48,7 +48,7 @@ func (ts *Timestamp) Scan(src any) error {
 
 	case uint64:
 		if v > math.MaxInt64 {
-			return oops.Errorf("src must be less than or equal to max value of int64")
+			return oops.New("src must be less than or equal to max value of int64")
 		}
 
 		ts.setUnix(int64(v))
@@ -75,7 +75,9 @@ func (ts *Timestamp) UnmarshalJSON(b []byte) error {
 
 func timeToTimestamp(t time.Time) Timestamp {
 	ts := Timestamp{}
-	ts.setTime(t)
+	{
+		ts.setTime(t)
+	}
 
 	return ts
 }
