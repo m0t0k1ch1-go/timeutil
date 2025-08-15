@@ -3,6 +3,7 @@ package timeutil_test
 import (
 	"database/sql/driver"
 	"encoding/json"
+	"math"
 	"testing"
 	"time"
 
@@ -42,6 +43,36 @@ func TestTimestampValue(t *testing.T) {
 }
 
 func TestTimestampScan(t *testing.T) {
+	t.Run("failure", func(t *testing.T) {
+		tcs := []struct {
+			name string
+			in   any
+		}{
+			{
+				name: "string",
+				in:   "1231006505",
+			},
+			{
+				name: "too large",
+				in:   uint64(math.MaxInt64) + 1,
+			},
+			{
+				name: "invalid bytes",
+				in:   []byte("invalid"),
+			},
+		}
+
+		for _, tc := range tcs {
+			t.Run(tc.name, func(t *testing.T) {
+				var ts timeutil.Timestamp
+				{
+					err := ts.Scan(tc.in)
+					require.Error(t, err)
+				}
+			})
+		}
+	})
+
 	t.Run("success", func(t *testing.T) {
 		tcs := []struct {
 			name string
@@ -115,6 +146,28 @@ func TestTimestampMarshalJSON(t *testing.T) {
 }
 
 func TestTimestampUnmarshalJSON(t *testing.T) {
+	t.Run("failure", func(t *testing.T) {
+		tcs := []struct {
+			name string
+			in   []byte
+		}{
+			{
+				name: "invalid",
+				in:   []byte("invalid"),
+			},
+		}
+
+		for _, tc := range tcs {
+			t.Run(tc.name, func(t *testing.T) {
+				var ts timeutil.Timestamp
+				{
+					err := json.Unmarshal(tc.in, &ts)
+					require.Error(t, err)
+				}
+			})
+		}
+	})
+
 	t.Run("success", func(t *testing.T) {
 		tcs := []struct {
 			name string

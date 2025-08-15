@@ -103,7 +103,7 @@ func (ts *Timestamp) setUnix(i int64) {
 func (ts *Timestamp) setString(s string) error {
 	i, err := strconv.ParseInt(s, 10, 64)
 	if err != nil {
-		return oops.Wrapf(err, "failed to convert %s into type int64", s)
+		return oops.Wrapf(err, "failed to parse s as int64")
 	}
 
 	ts.setUnix(i)
