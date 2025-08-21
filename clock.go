@@ -21,7 +21,8 @@ func (clk clock) Now() Timestamp {
 	return NewTimestamp(time.Now())
 }
 
-// MockClock represents a controllable, fixed-time clock for testing.
+// MockClock implements Clock.
+// It represents a controllable, fixed-time clock for testing.
 type MockClock struct {
 	ts Timestamp
 }
