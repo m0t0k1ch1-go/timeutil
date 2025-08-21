@@ -70,6 +70,39 @@ func TestNewTimestampFromUnix(t *testing.T) {
 	})
 }
 
+func TestTimestamp_String(t *testing.T) {
+	t.Run("success", func(t *testing.T) {
+		tcs := []struct {
+			name string
+			in   timeutil.Timestamp
+			want string
+		}{
+			{
+				"zero",
+				timeutil.NewTimestampFromUnix(0),
+				"0",
+			},
+			{
+				"positive",
+				timeutil.NewTimestampFromUnix(1231006505),
+				"1231006505",
+			},
+			{
+				"negative",
+				timeutil.NewTimestampFromUnix(-1231006505),
+				"-1231006505",
+			},
+		}
+
+		for _, tc := range tcs {
+			t.Run(tc.name, func(t *testing.T) {
+				s := tc.in.String()
+				require.Equal(t, tc.want, s)
+			})
+		}
+	})
+}
+
 func TestTimestamp_Value(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		tcs := []struct {
