@@ -27,21 +27,31 @@ func (ts *Timestamp) setTime(t time.Time) {
 	ts.t = t.In(time.UTC)
 }
 
+// NewTimestampFromUnix returns a new Timestamp from an int64 representing a Unix timestamp in seconds.
+func NewTimestampFromUnix(sec int64) Timestamp {
+	return NewTimestamp(time.Unix(sec, 0))
+}
+
 // Time returns the underlying time.Time.
 func (ts Timestamp) Time() time.Time {
 	return ts.t
 }
 
+// Unix returns the Unix timestamp in seconds as an int64.
+func (ts Timestamp) Unix() int64 {
+	return ts.t.Unix()
+}
+
 // String implements fmt.Stringer.
 // It returns the Unix timestamp in seconds as a decimal string.
 func (ts Timestamp) String() string {
-	return strconv.FormatInt(ts.t.Unix(), 10)
+	return strconv.FormatInt(ts.Unix(), 10)
 }
 
 // Value implements driver.Valuer.
 // It returns the Unix timestamp in seconds as an int64.
 func (ts Timestamp) Value() (driver.Value, error) {
-	return ts.t.Unix(), nil
+	return ts.Unix(), nil
 }
 
 // Scan implements sql.Scanner.
@@ -92,7 +102,7 @@ func (ts *Timestamp) Scan(src any) error {
 // MarshalJSON implements json.Marshaler.
 // It returns the Unix timestamp in seconds as a JSON number.
 func (ts Timestamp) MarshalJSON() ([]byte, error) {
-	return json.Marshal(ts.t.Unix())
+	return json.Marshal(ts.Unix())
 }
 
 // UnmarshalJSON implements json.Unmarshaler.
