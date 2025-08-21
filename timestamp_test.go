@@ -108,16 +108,21 @@ func TestTimestamp_Value(t *testing.T) {
 		tcs := []struct {
 			name string
 			in   timeutil.Timestamp
-			out  driver.Value
+			want driver.Value
 		}{
 			{
+				"zero",
+				timeutil.NewTimestampFromUnix(0),
+				int64(0),
+			},
+			{
 				"positive",
-				timeutil.NewTimestamp(time.Unix(1231006505, 0)),
+				timeutil.NewTimestampFromUnix(1231006505),
 				int64(1231006505),
 			},
 			{
 				"negative",
-				timeutil.NewTimestamp(time.Unix(-1231006505, 0)),
+				timeutil.NewTimestampFromUnix(-1231006505),
 				int64(-1231006505),
 			},
 		}
@@ -127,7 +132,7 @@ func TestTimestamp_Value(t *testing.T) {
 				v, err := tc.in.Value()
 				require.NoError(t, err)
 
-				require.Equal(t, tc.out, v)
+				require.Equal(t, tc.want, v)
 			})
 		}
 	})
