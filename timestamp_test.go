@@ -190,6 +190,11 @@ func TestTimestamp_Scan(t *testing.T) {
 			want int64
 		}{
 			{
+				"int64: zero",
+				int64(0),
+				0,
+			},
+			{
 				"int64: positive",
 				int64(1231006505),
 				1231006505,
@@ -289,6 +294,11 @@ func TestTimestamp_JSONUnmarshal(t *testing.T) {
 			{
 				"string: empty",
 				[]byte(`""`),
+				"invalid json number",
+			},
+			{
+				"string: zero",
+				[]byte(`"0"`),
 				"invalid json number",
 			},
 			{
