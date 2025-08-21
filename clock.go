@@ -1,6 +1,10 @@
 package timeutil
 
-// Clock is an interface for getting the current Timestamp.
+import (
+	"time"
+)
+
+// Clock represents a time source that returns Timestamps.
 type Clock interface {
 	Now() Timestamp
 }
@@ -12,29 +16,29 @@ func NewClock() Clock {
 	return &clock{}
 }
 
-// Now returns the current Timestamp.
-func (clk *clock) Now() Timestamp {
-	return Now()
+// Now returns the current time as a Timestamp.
+func (clk clock) Now() Timestamp {
+	return NewTimestamp(time.Now())
 }
 
-// MockClock is a mock implementation of Clock.
+// MockClock represents a controllable, fixed-time clock for testing.
 type MockClock struct {
 	ts Timestamp
 }
 
-// NewMockClock returns a new MockClock.
+// NewMockClock returns a new MockClock initialized with the given Timestamp.
 func NewMockClock(ts Timestamp) *MockClock {
 	return &MockClock{
 		ts: ts,
 	}
 }
 
-// Now returns the mock Timestamp.
+// Now returns the stored Timestamp.
 func (clk *MockClock) Now() Timestamp {
 	return clk.ts
 }
 
-// Set sets the mock Timestamp.
+// Set updates the stored Timestamp.
 func (clk *MockClock) Set(ts Timestamp) {
 	clk.ts = ts
 }
