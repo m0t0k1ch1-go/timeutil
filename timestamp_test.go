@@ -143,22 +143,32 @@ func TestTimestamp_Scan(t *testing.T) {
 		tcs := []struct {
 			name string
 			in   any
+			want string
 		}{
 			{
 				"nil",
 				nil,
+				"invalid source: nil",
 			},
 			{
-				"string",
-				"1231006505",
+				"time.Time",
+				time.Date(1970, 1, 1, 0, 0, 0, 0, time.UTC),
+				"unsupported source type: time.Time",
 			},
 			{
-				"too large uint64",
+				"uint64: exceeds int64 range",
 				uint64(math.MaxInt64) + 1,
+				"invalid source: exceeds int64 range",
 			},
 			{
-				"invalid []byte",
+				"[]byte: empty",
+				[]byte{},
+				"invalid source: empty []byte",
+			},
+			{
+				"[]byte: invalid",
 				[]byte("invalid"),
+				"invalid source",
 			},
 		}
 
@@ -167,7 +177,7 @@ func TestTimestamp_Scan(t *testing.T) {
 				var ts timeutil.Timestamp
 				{
 					err := ts.Scan(tc.in)
-					require.Error(t, err)
+					require.ErrorContains(t, err, tc.want)
 				}
 			})
 		}
@@ -177,39 +187,38 @@ func TestTimestamp_Scan(t *testing.T) {
 		tcs := []struct {
 			name string
 			in   any
-			out  timeutil.Timestamp
+			want int64
 		}{
 			{
-				"positive int64",
+				"int64: positive",
 				int64(1231006505),
-				timeutil.NewTimestamp(time.Unix(1231006505, 0)),
+				1231006505,
 			},
 			{
-				"negative int64",
+				"int64: negative",
 				int64(-1231006505),
-				timeutil.NewTimestamp(time.Unix(-1231006505, 0)),
+				-1231006505,
 			},
 			{
 				"uint64",
 				uint64(1231006505),
-				timeutil.NewTimestamp(time.Unix(1231006505, 0)),
+				1231006505,
 			},
 			{
 				"[]byte",
 				[]byte("1231006505"),
-				timeutil.NewTimestamp(time.Unix(1231006505, 0)),
+				1231006505,
 			},
 		}
 
 		for _, tc := range tcs {
 			t.Run(tc.name, func(t *testing.T) {
 				var ts timeutil.Timestamp
-				{
-					err := ts.Scan(tc.in)
-					require.NoError(t, err)
-				}
+				err := ts.Scan(tc.in)
+				require.NoError(t, err)
 
-				require.Equal(t, tc.out, ts)
+				require.Equal(t, tc.want, ts.Unix())
+				require.Equal(t, time.UTC, ts.Time().Location())
 			})
 		}
 	})
@@ -220,17 +229,22 @@ func TestTimestamp_JSONMarshal(t *testing.T) {
 		tcs := []struct {
 			name string
 			in   timeutil.Timestamp
-			out  []byte
+			want []byte
 		}{
 			{
+				"zero",
+				timeutil.NewTimestampFromUnix(0),
+				[]byte(`0`),
+			},
+			{
 				"positive",
-				timeutil.NewTimestamp(time.Unix(1231006505, 0)),
-				[]byte("1231006505"),
+				timeutil.NewTimestampFromUnix(1231006505),
+				[]byte(`1231006505`),
 			},
 			{
 				"negative",
-				timeutil.NewTimestamp(time.Unix(-1231006505, 0)),
-				[]byte("-1231006505"),
+				timeutil.NewTimestampFromUnix(-1231006505),
+				[]byte(`-1231006505`),
 			},
 		}
 
@@ -239,7 +253,7 @@ func TestTimestamp_JSONMarshal(t *testing.T) {
 				b, err := json.Marshal(tc.in)
 				require.NoError(t, err)
 
-				require.Equal(t, tc.out, b)
+				require.Equal(t, tc.want, b)
 			})
 		}
 	})
@@ -250,20 +264,50 @@ func TestTimestamp_JSONUnmarshal(t *testing.T) {
 		tcs := []struct {
 			name string
 			in   []byte
+			want string
 		}{
 			{
-				"invalid",
-				[]byte("invalid"),
+				"null",
+				[]byte(`null`),
+				"invalid json value: null",
+			},
+			{
+				"number: exceeds int64 range",
+				[]byte(`9223372036854775808`),
+				"invalid json number",
+			},
+			{
+				"number: fractional",
+				[]byte(`1231006505.0`),
+				"invalid json number",
+			},
+			{
+				"number: exponential",
+				[]byte(`1231006505e0`),
+				"invalid json number",
+			},
+			{
+				"string: empty",
+				[]byte(`""`),
+				"invalid json number",
+			},
+			{
+				"string: positive decimal",
+				[]byte(`"1231006505"`),
+				"invalid json number",
+			},
+			{
+				"string: negative decimal",
+				[]byte(`"-1231006505"`),
+				"invalid json number",
 			},
 		}
 
 		for _, tc := range tcs {
 			t.Run(tc.name, func(t *testing.T) {
 				var ts timeutil.Timestamp
-				{
-					err := json.Unmarshal(tc.in, &ts)
-					require.Error(t, err)
-				}
+				err := json.Unmarshal(tc.in, &ts)
+				require.ErrorContains(t, err, tc.want)
 			})
 		}
 	})
@@ -272,29 +316,33 @@ func TestTimestamp_JSONUnmarshal(t *testing.T) {
 		tcs := []struct {
 			name string
 			in   []byte
-			out  timeutil.Timestamp
+			want int64
 		}{
 			{
-				"positive",
-				[]byte("1231006505"),
-				timeutil.NewTimestamp(time.Unix(1231006505, 0)),
+				"number: zero",
+				[]byte(`0`),
+				0,
 			},
 			{
-				"negative",
-				[]byte("-1231006505"),
-				timeutil.NewTimestamp(time.Unix(-1231006505, 0)),
+				"number: positive",
+				[]byte(`1231006505`),
+				1231006505,
+			},
+			{
+				"number: negative",
+				[]byte(`-1231006505`),
+				-1231006505,
 			},
 		}
 
 		for _, tc := range tcs {
 			t.Run(tc.name, func(t *testing.T) {
 				var ts timeutil.Timestamp
-				{
-					err := json.Unmarshal(tc.in, &ts)
-					require.NoError(t, err)
-				}
+				err := json.Unmarshal(tc.in, &ts)
+				require.NoError(t, err)
 
-				require.Equal(t, tc.out, ts)
+				require.Equal(t, tc.want, ts.Unix())
+				require.Equal(t, time.UTC, ts.Time().Location())
 			})
 		}
 	})
