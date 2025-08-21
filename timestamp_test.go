@@ -12,7 +12,31 @@ import (
 	"github.com/m0t0k1ch1-go/timeutil/v4"
 )
 
-func TestTimestampValue(t *testing.T) {
+func TestNewTimestamp(t *testing.T) {
+	t.Run("success", func(t *testing.T) {
+		tcs := []struct {
+			name string
+			in   time.Time
+			want int64
+		}{
+			{
+				"Unix epoch in JST",
+				time.Date(1970, 1, 1, 9, 0, 0, 0, time.FixedZone("JST", 9*60*60)),
+				0,
+			},
+		}
+
+		for _, tc := range tcs {
+			t.Run(tc.name, func(t *testing.T) {
+				ts := timeutil.NewTimestamp(tc.in)
+				require.Equal(t, tc.want, ts.Unix())
+				require.Equal(t, time.UTC, ts.Time().Location())
+			})
+		}
+	})
+}
+
+func TestTimestamp_Value(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		tcs := []struct {
 			name string
@@ -42,7 +66,7 @@ func TestTimestampValue(t *testing.T) {
 	})
 }
 
-func TestTimestampScan(t *testing.T) {
+func TestTimestamp_Scan(t *testing.T) {
 	t.Run("failure", func(t *testing.T) {
 		tcs := []struct {
 			name string
@@ -119,7 +143,7 @@ func TestTimestampScan(t *testing.T) {
 	})
 }
 
-func TestTimestampMarshalJSON(t *testing.T) {
+func TestTimestamp_JSONMarshal(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		tcs := []struct {
 			name string
@@ -149,7 +173,7 @@ func TestTimestampMarshalJSON(t *testing.T) {
 	})
 }
 
-func TestTimestampUnmarshalJSON(t *testing.T) {
+func TestTimestamp_JSONUnmarshal(t *testing.T) {
 	t.Run("failure", func(t *testing.T) {
 		tcs := []struct {
 			name string
