@@ -12,21 +12,27 @@ import (
 func TestClock(t *testing.T) {
 	clk := timeutil.NewClock()
 
-	ts := clk.Now()
+	before := time.Now()
+	got := clk.Now()
+	after := time.Now()
 
-	time.Sleep(1 * time.Second)
-
-	require.True(t, clk.Now().Time().After(ts.Time()))
+	require.False(t, got.Time().Before(before))
+	require.False(t, got.Time().After(after))
+	require.Equal(t, time.UTC, got.Time().Location())
 }
 
 func TestMockClock(t *testing.T) {
-	ts := timeutil.Now()
+	now := time.Unix(0, 0)
+	clk := timeutil.NewMockClock(timeutil.NewTimestamp(now))
 
-	clk := timeutil.NewMockClock(ts)
+	got := clk.Now()
+	require.True(t, got.Time().Equal(now))
+	require.Equal(t, time.UTC, got.Time().Location())
 
-	require.Equal(t, ts, clk.Now())
+	now = time.Unix(1231006505, 0)
+	clk.Set(timeutil.NewTimestamp(now))
 
-	time.Sleep(1 * time.Second)
-
-	require.Equal(t, ts, clk.Now())
+	got = clk.Now()
+	require.True(t, got.Time().Equal(now))
+	require.Equal(t, time.UTC, got.Time().Location())
 }

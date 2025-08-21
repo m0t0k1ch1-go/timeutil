@@ -2,111 +2,125 @@ package timeutil
 
 import (
 	"database/sql/driver"
+	"encoding/json"
+	"errors"
+	"fmt"
 	"math"
 	"strconv"
 	"time"
-
-	"github.com/samber/oops"
 )
 
-// Timestamp is a wrapper for time.Time.
+// Timestamp represents a point in time in UTC.
 type Timestamp struct {
 	t time.Time
 }
 
 // NewTimestamp returns a new Timestamp.
 func NewTimestamp(t time.Time) Timestamp {
-	return timeToTimestamp(t)
-}
-
-// Now returns the current Timestamp.
-func Now() Timestamp {
-	return timeToTimestamp(time.Now())
-}
-
-// Time returns the wrapped time.Time.
-func (ts Timestamp) Time() time.Time {
-	return ts.t
-}
-
-// String implements the fmt.Stringer interface.
-func (ts Timestamp) String() string {
-	return ts.string()
-}
-
-// Value implements the driver.Valuer interface.
-func (ts Timestamp) Value() (driver.Value, error) {
-	return ts.unix(), nil
-}
-
-// Scan implements the sql.Scanner interface.
-func (ts *Timestamp) Scan(src any) error {
-	switch v := src.(type) {
-
-	case int64:
-		ts.setUnix(v)
-
-		return nil
-
-	case uint64:
-		if v > math.MaxInt64 {
-			return oops.New("src must be less than or equal to max value of int64")
-		}
-
-		ts.setUnix(int64(v))
-
-		return nil
-
-	case []byte:
-		return ts.setString(string(v))
-
-	default:
-		return oops.Errorf("unexpected src type: %T", src)
-	}
-}
-
-// MarshalJSON implements the json.Marshaler interface.
-func (ts Timestamp) MarshalJSON() ([]byte, error) {
-	return []byte(ts.string()), nil
-}
-
-// UnmarshalJSON implements the json.Unmarshaler interface.
-func (ts *Timestamp) UnmarshalJSON(b []byte) error {
-	return ts.setString(string(b))
-}
-
-func timeToTimestamp(t time.Time) Timestamp {
-	ts := Timestamp{}
-	{
-		ts.setTime(t)
-	}
+	var ts Timestamp
+	ts.setTime(t)
 
 	return ts
-}
-
-func (ts Timestamp) unix() int64 {
-	return ts.t.Unix()
-}
-
-func (ts Timestamp) string() string {
-	return strconv.FormatInt(ts.unix(), 10)
 }
 
 func (ts *Timestamp) setTime(t time.Time) {
 	ts.t = t.In(time.UTC)
 }
 
-func (ts *Timestamp) setUnix(i int64) {
-	ts.setTime(time.Unix(i, 0))
+// NewTimestampFromUnix returns a new Timestamp from an int64 representing a Unix timestamp in seconds.
+func NewTimestampFromUnix(sec int64) Timestamp {
+	return NewTimestamp(time.Unix(sec, 0))
 }
 
-func (ts *Timestamp) setString(s string) error {
-	i, err := strconv.ParseInt(s, 10, 64)
-	if err != nil {
-		return oops.Wrapf(err, "failed to parse s as int64")
+// Time returns the underlying time.Time.
+func (ts Timestamp) Time() time.Time {
+	return ts.t
+}
+
+// Unix returns the Unix timestamp in seconds as an int64.
+func (ts Timestamp) Unix() int64 {
+	return ts.t.Unix()
+}
+
+// String implements fmt.Stringer.
+// It returns the Unix timestamp in seconds as a decimal string.
+func (ts Timestamp) String() string {
+	return strconv.FormatInt(ts.Unix(), 10)
+}
+
+// Value implements driver.Valuer.
+// It returns the Unix timestamp in seconds as an int64.
+func (ts Timestamp) Value() (driver.Value, error) {
+	return ts.Unix(), nil
+}
+
+// Scan implements sql.Scanner.
+// It accepts a Unix timestamp in seconds as one of:
+//   - int64
+//   - uint64 (<= math.MaxInt64)
+//   - []byte (decimal string)
+func (ts *Timestamp) Scan(src any) error {
+	if src == nil {
+		return errors.New("invalid source: nil")
 	}
 
-	ts.setUnix(i)
+	switch v := src.(type) {
+
+	case int64:
+		ts.setTime(time.Unix(v, 0))
+
+		return nil
+
+	case uint64:
+		if v > math.MaxInt64 {
+			return errors.New("invalid source: exceeds int64 range")
+		}
+
+		ts.setTime(time.Unix(int64(v), 0))
+
+		return nil
+
+	case []byte:
+		if len(v) == 0 {
+			return errors.New("invalid source: empty []byte")
+		}
+
+		i, err := strconv.ParseInt(string(v), 10, 64)
+		if err != nil {
+			return fmt.Errorf("invalid source: %w", err)
+		}
+
+		ts.setTime(time.Unix(i, 0))
+
+		return nil
+
+	default:
+		return fmt.Errorf("unsupported source type: %T", src)
+	}
+}
+
+// MarshalJSON implements json.Marshaler.
+// It returns the Unix timestamp in seconds as a JSON number.
+func (ts Timestamp) MarshalJSON() ([]byte, error) {
+	return json.Marshal(ts.Unix())
+}
+
+// UnmarshalJSON implements json.Unmarshaler.
+// It accepts a JSON number representing a Unix timestamp in seconds.
+func (ts *Timestamp) UnmarshalJSON(b []byte) error {
+	if len(b) == 0 {
+		return errors.New("invalid json value: empty")
+	}
+	if string(b) == "null" {
+		return errors.New("invalid json value: null")
+	}
+
+	var i int64
+	if err := json.Unmarshal(b, &i); err != nil {
+		return fmt.Errorf("invalid json number: %w", err)
+	}
+
+	ts.setTime(time.Unix(i, 0))
 
 	return nil
 }
