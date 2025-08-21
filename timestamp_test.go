@@ -131,7 +131,6 @@ func TestTimestamp_Value(t *testing.T) {
 			t.Run(tc.name, func(t *testing.T) {
 				v, err := tc.in.Value()
 				require.NoError(t, err)
-
 				require.Equal(t, tc.want, v)
 			})
 		}
@@ -175,10 +174,8 @@ func TestTimestamp_Scan(t *testing.T) {
 		for _, tc := range tcs {
 			t.Run(tc.name, func(t *testing.T) {
 				var ts timeutil.Timestamp
-				{
-					err := ts.Scan(tc.in)
-					require.ErrorContains(t, err, tc.want)
-				}
+				err := ts.Scan(tc.in)
+				require.ErrorContains(t, err, tc.want)
 			})
 		}
 	})
@@ -221,7 +218,6 @@ func TestTimestamp_Scan(t *testing.T) {
 				var ts timeutil.Timestamp
 				err := ts.Scan(tc.in)
 				require.NoError(t, err)
-
 				require.Equal(t, tc.want, ts.Unix())
 				require.Equal(t, time.UTC, ts.Time().Location())
 			})
@@ -257,7 +253,6 @@ func TestTimestamp_JSONMarshal(t *testing.T) {
 			t.Run(tc.name, func(t *testing.T) {
 				b, err := json.Marshal(tc.in)
 				require.NoError(t, err)
-
 				require.Equal(t, tc.want, b)
 			})
 		}
@@ -350,7 +345,6 @@ func TestTimestamp_JSONUnmarshal(t *testing.T) {
 				var ts timeutil.Timestamp
 				err := json.Unmarshal(tc.in, &ts)
 				require.NoError(t, err)
-
 				require.Equal(t, tc.want, ts.Unix())
 				require.Equal(t, time.UTC, ts.Time().Location())
 			})
