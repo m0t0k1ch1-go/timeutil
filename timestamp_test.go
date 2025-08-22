@@ -2,15 +2,30 @@ package timeutil_test
 
 import (
 	"bytes"
+	"database/sql"
 	"database/sql/driver"
+	"encoding/json"
+	"fmt"
 	"math"
 	"testing"
 	"time"
 
+	"github.com/99designs/gqlgen/graphql"
 	"github.com/stretchr/testify/require"
 
 	"github.com/m0t0k1ch1-go/timeutil/v5"
 )
+
+func TestTimestamp(t *testing.T) {
+	var ts timeutil.Timestamp
+	require.Implements(t, (*fmt.Stringer)(nil), &ts)
+	require.Implements(t, (*driver.Valuer)(nil), &ts)
+	require.Implements(t, (*sql.Scanner)(nil), &ts)
+	require.Implements(t, (*json.Marshaler)(nil), &ts)
+	require.Implements(t, (*graphql.Marshaler)(nil), &ts)
+	require.Implements(t, (*json.Unmarshaler)(nil), &ts)
+	require.Implements(t, (*graphql.Unmarshaler)(nil), &ts)
+}
 
 func TestNewTimestamp(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
