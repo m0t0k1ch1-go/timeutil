@@ -1,6 +1,7 @@
 package timeutil_test
 
 import (
+	"bytes"
 	"database/sql/driver"
 	"encoding/json"
 	"math"
@@ -259,6 +260,40 @@ func TestTimestamp_JSONMarshal(t *testing.T) {
 	})
 }
 
+func TestTimestamp_MarshalGQL(t *testing.T) {
+	t.Run("success", func(t *testing.T) {
+		tcs := []struct {
+			name string
+			in   timeutil.Timestamp
+			want string
+		}{
+			{
+				"zero",
+				timeutil.NewTimestampFromUnix(0),
+				`"0"`,
+			},
+			{
+				"positive",
+				timeutil.NewTimestampFromUnix(1231006505),
+				`"1231006505"`,
+			},
+			{
+				"negative",
+				timeutil.NewTimestampFromUnix(-1231006505),
+				`"-1231006505"`,
+			},
+		}
+
+		for _, tc := range tcs {
+			t.Run(tc.name, func(t *testing.T) {
+				var buf bytes.Buffer
+				tc.in.MarshalGQL(&buf)
+				require.Equal(t, tc.want, buf.String())
+			})
+		}
+	})
+}
+
 func TestTimestamp_JSONUnmarshal(t *testing.T) {
 	t.Run("failure", func(t *testing.T) {
 		tcs := []struct {
@@ -344,6 +379,79 @@ func TestTimestamp_JSONUnmarshal(t *testing.T) {
 			t.Run(tc.name, func(t *testing.T) {
 				var ts timeutil.Timestamp
 				err := json.Unmarshal(tc.in, &ts)
+				require.NoError(t, err)
+				require.Equal(t, tc.want, ts.Unix())
+				require.Equal(t, time.UTC, ts.Time().Location())
+			})
+		}
+	})
+}
+
+func TestTimestamp_UnmarshalGQL(t *testing.T) {
+	t.Run("failure", func(t *testing.T) {
+		tcs := []struct {
+			name string
+			in   any
+			want string
+		}{
+			{
+				"nil",
+				nil,
+				"invalid graphql value: nil",
+			},
+			{
+				"int",
+				int(0),
+				"unsupported graphql value type: int",
+			},
+			{
+				"string: empty",
+				"",
+				"invalid graphql string: empty",
+			},
+			{
+				"string: invalid",
+				"invalid",
+				"invalid graphql string",
+			},
+		}
+
+		for _, tc := range tcs {
+			t.Run(tc.name, func(t *testing.T) {
+				var ts timeutil.Timestamp
+				err := ts.UnmarshalGQL(tc.in)
+				require.ErrorContains(t, err, tc.want)
+			})
+		}
+	})
+
+	t.Run("success", func(t *testing.T) {
+		tcs := []struct {
+			name string
+			in   any
+			want int64
+		}{
+			{
+				"zero",
+				"0",
+				0,
+			},
+			{
+				"positive",
+				"1231006505",
+				1231006505,
+			},
+			{
+				"negative",
+				"-1231006505",
+				-1231006505,
+			},
+		}
+
+		for _, tc := range tcs {
+			t.Run(tc.name, func(t *testing.T) {
+				var ts timeutil.Timestamp
+				err := ts.UnmarshalGQL(tc.in)
 				require.NoError(t, err)
 				require.Equal(t, tc.want, ts.Unix())
 				require.Equal(t, time.UTC, ts.Time().Location())
