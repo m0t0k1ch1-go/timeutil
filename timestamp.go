@@ -109,7 +109,7 @@ func (ts Timestamp) MarshalJSON() ([]byte, error) {
 // MarshalGQL implements graphql.Marshaler.
 // It writes the Unix timestamp in seconds as a quoted decimal string.
 func (ts Timestamp) MarshalGQL(w io.Writer) {
-	_, _ = io.WriteString(w, strconv.Quote(strconv.FormatInt(ts.Unix(), 10)))
+	_, _ = io.WriteString(w, strconv.Quote(ts.String()))
 }
 
 // UnmarshalJSON implements json.Unmarshaler.
