@@ -56,7 +56,7 @@ func (ts Timestamp) Value() (driver.Value, error) {
 }
 
 // Scan implements sql.Scanner.
-// It accepts a Unix timestamp in seconds as one of:
+// It accepts a Unix timestamp in seconds as one of the following:
 //   - int64
 //   - uint64 (<= math.MaxInt64)
 //   - []byte (decimal string)
