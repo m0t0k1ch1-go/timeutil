@@ -3,7 +3,6 @@ package timeutil_test
 import (
 	"bytes"
 	"database/sql/driver"
-	"encoding/json"
 	"math"
 	"testing"
 	"time"
@@ -226,7 +225,7 @@ func TestTimestamp_Scan(t *testing.T) {
 	})
 }
 
-func TestTimestamp_JSONMarshal(t *testing.T) {
+func TestTimestamp_MarshalJSON(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		tcs := []struct {
 			name string
@@ -252,7 +251,7 @@ func TestTimestamp_JSONMarshal(t *testing.T) {
 
 		for _, tc := range tcs {
 			t.Run(tc.name, func(t *testing.T) {
-				b, err := json.Marshal(tc.in)
+				b, err := tc.in.MarshalJSON()
 				require.NoError(t, err)
 				require.Equal(t, tc.want, b)
 			})
@@ -294,13 +293,18 @@ func TestTimestamp_MarshalGQL(t *testing.T) {
 	})
 }
 
-func TestTimestamp_JSONUnmarshal(t *testing.T) {
+func TestTimestamp_UnmarshalJSON(t *testing.T) {
 	t.Run("failure", func(t *testing.T) {
 		tcs := []struct {
 			name string
 			in   []byte
 			want string
 		}{
+			{
+				"empty",
+				[]byte{},
+				"invalid json value: empty",
+			},
 			{
 				"null",
 				[]byte(`null`),
@@ -346,7 +350,7 @@ func TestTimestamp_JSONUnmarshal(t *testing.T) {
 		for _, tc := range tcs {
 			t.Run(tc.name, func(t *testing.T) {
 				var ts timeutil.Timestamp
-				err := json.Unmarshal(tc.in, &ts)
+				err := ts.UnmarshalJSON(tc.in)
 				require.ErrorContains(t, err, tc.want)
 			})
 		}
@@ -378,7 +382,7 @@ func TestTimestamp_JSONUnmarshal(t *testing.T) {
 		for _, tc := range tcs {
 			t.Run(tc.name, func(t *testing.T) {
 				var ts timeutil.Timestamp
-				err := json.Unmarshal(tc.in, &ts)
+				err := ts.UnmarshalJSON(tc.in)
 				require.NoError(t, err)
 				require.Equal(t, tc.want, ts.Unix())
 				require.Equal(t, time.UTC, ts.Time().Location())
