@@ -399,6 +399,99 @@ func TestTimestamp_MarshalGQL(t *testing.T) {
 	})
 }
 
+func TestTimestamp_UnmarshalText(t *testing.T) {
+	t.Run("failure", func(t *testing.T) {
+		tcs := []struct {
+			name string
+			in   []byte
+			want string
+		}{
+			{
+				"nil",
+				nil,
+				"invalid decimal string: empty",
+			},
+			{
+				"bytes: empty",
+				[]byte{},
+				"invalid decimal string: empty",
+			},
+			{
+				"string bytes: invalid",
+				[]byte("invalid"),
+				"invalid decimal string",
+			},
+			{
+				"decimal string bytes: fractional",
+				[]byte("1231006505.0"),
+				"invalid decimal string",
+			},
+			{
+				"decimal string bytes: exponential",
+				[]byte("1231006505e0"),
+				"invalid decimal string",
+			},
+			{
+				"decimal string bytes: contains underscores",
+				[]byte("1_231_006_505"),
+				"invalid decimal string",
+			},
+			{
+				"decimal string bytes: exceeds int64 range",
+				[]byte("9223372036854775808"),
+				"invalid decimal string",
+			},
+		}
+
+		for _, tc := range tcs {
+			t.Run(tc.name, func(t *testing.T) {
+				var ts timeutil.Timestamp
+				err := ts.UnmarshalText(tc.in)
+				require.ErrorContains(t, err, tc.want)
+			})
+		}
+	})
+
+	t.Run("success", func(t *testing.T) {
+		tcs := []struct {
+			name string
+			in   []byte
+			want int64
+		}{
+			{
+				"decimal string: zero",
+				[]byte("0"),
+				0,
+			},
+			{
+				"decimal string: unsigned",
+				[]byte("1231006505"),
+				1231006505,
+			},
+			{
+				"decimal string: signed positive",
+				[]byte("+1231006505"),
+				1231006505,
+			},
+			{
+				"decimal string: signed negative",
+				[]byte("-1231006505"),
+				-1231006505,
+			},
+		}
+
+		for _, tc := range tcs {
+			t.Run(tc.name, func(t *testing.T) {
+				var ts timeutil.Timestamp
+				err := ts.UnmarshalText(tc.in)
+				require.NoError(t, err)
+				require.Equal(t, tc.want, ts.Unix())
+				require.Equal(t, time.UTC, ts.Time().Location())
+			})
+		}
+	})
+}
+
 func TestTimestamp_JSONUnmarshaling(t *testing.T) {
 	decs := []struct {
 		name      string
