@@ -77,6 +77,11 @@ func (ts Timestamp) Unix() int64 {
 	return ts.t.Unix()
 }
 
+// Add returns a new [Timestamp] representing the time ts+d.
+func (ts Timestamp) Add(d time.Duration) Timestamp {
+	return NewTimestamp(ts.t.Add(d))
+}
+
 // String implements [fmt.Stringer].
 // It encodes ts as a decimal string representing the Unix timestamp in seconds.
 func (ts Timestamp) String() string {
