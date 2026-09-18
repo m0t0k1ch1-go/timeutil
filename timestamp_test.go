@@ -459,22 +459,22 @@ func TestTimestamp_UnmarshalText(t *testing.T) {
 			want int64
 		}{
 			{
-				"decimal string: zero",
+				"decimal string bytes: zero",
 				[]byte("0"),
 				0,
 			},
 			{
-				"decimal string: unsigned",
+				"decimal string bytes: unsigned",
 				[]byte("1231006505"),
 				1231006505,
 			},
 			{
-				"decimal string: signed positive",
+				"decimal string bytes: signed positive",
 				[]byte("+1231006505"),
 				1231006505,
 			},
 			{
-				"decimal string: signed negative",
+				"decimal string bytes: signed negative",
 				[]byte("-1231006505"),
 				-1231006505,
 			},
@@ -518,42 +518,47 @@ func TestTimestamp_JSONUnmarshaling(t *testing.T) {
 			want string
 		}{
 			{
-				"empty",
+				"nil",
+				nil,
+				"",
+			},
+			{
+				"bytes: empty",
 				[]byte{},
 				"",
 			},
 			{
-				"null",
+				"unquoted string bytes: null",
 				[]byte(`null`),
 				"unsupported json token kind: null",
 			},
 			{
-				"quoted decimal string",
+				"quoted decimal string bytes",
 				[]byte(`"0"`),
 				"unsupported json token kind: string",
 			},
 			{
-				"unquoted decimal string: signed positive",
+				"unquoted decimal string bytes: signed positive",
 				[]byte(`+1231006505`),
 				"unsupported json token kind: invalid",
 			},
 			{
-				"unquoted decimal string: truncated",
+				"unquoted decimal string bytes: truncated",
 				[]byte(`0.`),
 				"failed to read value",
 			},
 			{
-				"unquoted decimal string: fractional",
+				"unquoted decimal string bytes: fractional",
 				[]byte(`1231006505.0`),
 				"invalid decimal string",
 			},
 			{
-				"unquoted decimal string: exponential",
+				"unquoted decimal string bytes: exponential",
 				[]byte(`1231006505e0`),
 				"invalid decimal string",
 			},
 			{
-				"unquoted decimal string: exceeds int64 range",
+				"unquoted decimal string bytes: exceeds int64 range",
 				[]byte(`9223372036854775808`),
 				"invalid decimal string",
 			},
@@ -579,17 +584,17 @@ func TestTimestamp_JSONUnmarshaling(t *testing.T) {
 			want int64
 		}{
 			{
-				"unquoted decimal string: zero",
+				"unquoted decimal string bytes: zero",
 				[]byte(`0`),
 				0,
 			},
 			{
-				"unquoted decimal string: unsigned",
+				"unquoted decimal string bytes: unsigned",
 				[]byte(`1231006505`),
 				1231006505,
 			},
 			{
-				"unquoted decimal string: signed negative",
+				"unquoted decimal string bytes: signed negative",
 				[]byte(`-1231006505`),
 				-1231006505,
 			},
