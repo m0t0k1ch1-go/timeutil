@@ -4,7 +4,8 @@ import (
 	"bytes"
 	"database/sql"
 	"database/sql/driver"
-	"encoding/json"
+	"encoding"
+	"encoding/json/v2"
 	"fmt"
 	"math"
 	"testing"
@@ -21,8 +22,12 @@ func TestTimestamp(t *testing.T) {
 	require.Implements(t, (*fmt.Stringer)(nil), &ts)
 	require.Implements(t, (*driver.Valuer)(nil), &ts)
 	require.Implements(t, (*sql.Scanner)(nil), &ts)
+	require.Implements(t, (*encoding.TextMarshaler)(nil), &ts)
+	require.Implements(t, (*json.MarshalerTo)(nil), &ts)
 	require.Implements(t, (*json.Marshaler)(nil), &ts)
 	require.Implements(t, (*graphql.Marshaler)(nil), &ts)
+	require.Implements(t, (*encoding.TextUnmarshaler)(nil), &ts)
+	require.Implements(t, (*json.UnmarshalerFrom)(nil), &ts)
 	require.Implements(t, (*json.Unmarshaler)(nil), &ts)
 	require.Implements(t, (*graphql.Unmarshaler)(nil), &ts)
 }
@@ -162,27 +167,47 @@ func TestTimestamp_Scan(t *testing.T) {
 			{
 				"nil",
 				nil,
-				"invalid source: nil",
+				"unsupported source: nil",
 			},
 			{
-				"time.Time",
+				"time",
 				time.Date(1970, 1, 1, 0, 0, 0, 0, time.UTC),
 				"unsupported source type: time.Time",
 			},
 			{
 				"uint64: exceeds int64 range",
 				uint64(math.MaxInt64) + 1,
-				"invalid source: exceeds int64 range",
+				"invalid uint64 source: exceeds int64 range",
 			},
 			{
-				"[]byte: empty",
+				"bytes: empty",
 				[]byte{},
-				"invalid source: empty []byte",
+				"invalid decimal string: empty",
 			},
 			{
-				"[]byte: invalid",
+				"bytes: invalid",
 				[]byte("invalid"),
-				"invalid source",
+				"invalid decimal string",
+			},
+			{
+				"decimal string bytes: fractional",
+				[]byte("1231006505.0"),
+				"invalid decimal string",
+			},
+			{
+				"decimal string bytes: exponential",
+				[]byte("1231006505e0"),
+				"invalid decimal string",
+			},
+			{
+				"decimal string bytes: contains underscores",
+				[]byte("1_231_006_505"),
+				"invalid decimal string",
+			},
+			{
+				"decimal string bytes: exceeds int64 range",
+				[]byte("9223372036854775808"),
+				"invalid decimal string",
 			},
 		}
 
@@ -222,9 +247,19 @@ func TestTimestamp_Scan(t *testing.T) {
 				1231006505,
 			},
 			{
-				"[]byte",
+				"decimal string bytes: unsigned",
 				[]byte("1231006505"),
 				1231006505,
+			},
+			{
+				"decimal string bytes: signed positive",
+				[]byte("+1231006505"),
+				1231006505,
+			},
+			{
+				"decimal string bytes: signed negative",
+				[]byte("-1231006505"),
+				-1231006505,
 			},
 		}
 
@@ -240,7 +275,59 @@ func TestTimestamp_Scan(t *testing.T) {
 	})
 }
 
-func TestTimestamp_MarshalJSON(t *testing.T) {
+func TestTimestamp_MarshalText(t *testing.T) {
+	t.Run("success", func(t *testing.T) {
+		tcs := []struct {
+			name string
+			in   timeutil.Timestamp
+			want []byte
+		}{
+			{
+				"zero",
+				timeutil.NewTimestampFromUnix(0),
+				[]byte("0"),
+			},
+			{
+				"positive",
+				timeutil.NewTimestampFromUnix(1231006505),
+				[]byte("1231006505"),
+			},
+			{
+				"negative",
+				timeutil.NewTimestampFromUnix(-1231006505),
+				[]byte("-1231006505"),
+			},
+		}
+
+		for _, tc := range tcs {
+			t.Run(tc.name, func(t *testing.T) {
+				b, err := tc.in.MarshalText()
+				require.NoError(t, err)
+				require.Equal(t, tc.want, b)
+			})
+		}
+	})
+}
+
+func TestTimestamp_JSONMarshaling(t *testing.T) {
+	encs := []struct {
+		name    string
+		marshal func(timeutil.Timestamp) ([]byte, error)
+	}{
+		{
+			"json.Marshal",
+			func(ts timeutil.Timestamp) ([]byte, error) {
+				return json.Marshal(ts)
+			},
+		},
+		{
+			"MarshalJSON",
+			func(ts timeutil.Timestamp) ([]byte, error) {
+				return ts.MarshalJSON()
+			},
+		},
+	}
+
 	t.Run("success", func(t *testing.T) {
 		tcs := []struct {
 			name string
@@ -266,9 +353,13 @@ func TestTimestamp_MarshalJSON(t *testing.T) {
 
 		for _, tc := range tcs {
 			t.Run(tc.name, func(t *testing.T) {
-				b, err := tc.in.MarshalJSON()
-				require.NoError(t, err)
-				require.Equal(t, tc.want, b)
+				for _, enc := range encs {
+					t.Run(enc.name, func(t *testing.T) {
+						b, err := enc.marshal(tc.in)
+						require.NoError(t, err)
+						require.Equal(t, tc.want, b)
+					})
+				}
 			})
 		}
 	})
@@ -308,7 +399,25 @@ func TestTimestamp_MarshalGQL(t *testing.T) {
 	})
 }
 
-func TestTimestamp_UnmarshalJSON(t *testing.T) {
+func TestTimestamp_JSONUnmarshaling(t *testing.T) {
+	decs := []struct {
+		name      string
+		unmarshal func([]byte, *timeutil.Timestamp) error
+	}{
+		{
+			"json.Unmarshal",
+			func(b []byte, ts *timeutil.Timestamp) error {
+				return json.Unmarshal(b, ts)
+			},
+		},
+		{
+			"UnmarshalJSON",
+			func(b []byte, ts *timeutil.Timestamp) error {
+				return ts.UnmarshalJSON(b)
+			},
+		},
+	}
+
 	t.Run("failure", func(t *testing.T) {
 		tcs := []struct {
 			name string
@@ -318,55 +427,54 @@ func TestTimestamp_UnmarshalJSON(t *testing.T) {
 			{
 				"empty",
 				[]byte{},
-				"invalid json value: empty",
+				"",
 			},
 			{
 				"null",
 				[]byte(`null`),
-				"invalid json value: null",
+				"unsupported json token kind: null",
 			},
 			{
-				"number: exceeds int64 range",
-				[]byte(`9223372036854775808`),
-				"invalid json number",
-			},
-			{
-				"number: fractional",
-				[]byte(`1231006505.0`),
-				"invalid json number",
-			},
-			{
-				"number: exponential",
-				[]byte(`1231006505e0`),
-				"invalid json number",
-			},
-			{
-				"string: empty",
-				[]byte(`""`),
-				"invalid json number",
-			},
-			{
-				"string: zero",
+				"quoted decimal string",
 				[]byte(`"0"`),
-				"invalid json number",
+				"unsupported json token kind: string",
 			},
 			{
-				"string: positive decimal",
-				[]byte(`"1231006505"`),
-				"invalid json number",
+				"unquoted decimal string: signed positive",
+				[]byte(`+1231006505`),
+				"unsupported json token kind: invalid",
 			},
 			{
-				"string: negative decimal",
-				[]byte(`"-1231006505"`),
-				"invalid json number",
+				"unquoted decimal string: truncated",
+				[]byte(`0.`),
+				"failed to read value",
+			},
+			{
+				"unquoted decimal string: fractional",
+				[]byte(`1231006505.0`),
+				"invalid decimal string",
+			},
+			{
+				"unquoted decimal string: exponential",
+				[]byte(`1231006505e0`),
+				"invalid decimal string",
+			},
+			{
+				"unquoted decimal string: exceeds int64 range",
+				[]byte(`9223372036854775808`),
+				"invalid decimal string",
 			},
 		}
 
 		for _, tc := range tcs {
 			t.Run(tc.name, func(t *testing.T) {
-				var ts timeutil.Timestamp
-				err := ts.UnmarshalJSON(tc.in)
-				require.ErrorContains(t, err, tc.want)
+				for _, dec := range decs {
+					t.Run(dec.name, func(t *testing.T) {
+						var ts timeutil.Timestamp
+						err := dec.unmarshal(tc.in, &ts)
+						require.ErrorContains(t, err, tc.want)
+					})
+				}
 			})
 		}
 	})
@@ -378,17 +486,17 @@ func TestTimestamp_UnmarshalJSON(t *testing.T) {
 			want int64
 		}{
 			{
-				"number: zero",
+				"unquoted decimal string: zero",
 				[]byte(`0`),
 				0,
 			},
 			{
-				"number: positive",
+				"unquoted decimal string: unsigned",
 				[]byte(`1231006505`),
 				1231006505,
 			},
 			{
-				"number: negative",
+				"unquoted decimal string: signed negative",
 				[]byte(`-1231006505`),
 				-1231006505,
 			},
@@ -396,11 +504,15 @@ func TestTimestamp_UnmarshalJSON(t *testing.T) {
 
 		for _, tc := range tcs {
 			t.Run(tc.name, func(t *testing.T) {
-				var ts timeutil.Timestamp
-				err := ts.UnmarshalJSON(tc.in)
-				require.NoError(t, err)
-				require.Equal(t, tc.want, ts.Unix())
-				require.Equal(t, time.UTC, ts.Time().Location())
+				for _, dec := range decs {
+					t.Run(dec.name, func(t *testing.T) {
+						var ts timeutil.Timestamp
+						err := dec.unmarshal(tc.in, &ts)
+						require.NoError(t, err)
+						require.Equal(t, tc.want, ts.Unix())
+						require.Equal(t, time.UTC, ts.Time().Location())
+					})
+				}
 			})
 		}
 	})
@@ -416,22 +528,42 @@ func TestTimestamp_UnmarshalGQL(t *testing.T) {
 			{
 				"nil",
 				nil,
-				"invalid graphql value: nil",
+				"unsupported value: nil",
 			},
 			{
 				"int",
 				int(0),
-				"unsupported graphql value type: int",
+				"unsupported value type: int",
 			},
 			{
 				"string: empty",
 				"",
-				"invalid graphql string: empty",
+				"invalid decimal string: empty",
 			},
 			{
 				"string: invalid",
 				"invalid",
-				"invalid graphql string",
+				"invalid decimal string",
+			},
+			{
+				"decimal string: fractional",
+				"1231006505.0",
+				"invalid decimal string",
+			},
+			{
+				"decimal string: exponential",
+				"1231006505e0",
+				"invalid decimal string",
+			},
+			{
+				"decimal string: contains underscores",
+				"1_231_006_505",
+				"invalid decimal string",
+			},
+			{
+				"decimal string: exceeds int64 range",
+				"9223372036854775808",
+				"invalid decimal string",
 			},
 		}
 
@@ -451,17 +583,22 @@ func TestTimestamp_UnmarshalGQL(t *testing.T) {
 			want int64
 		}{
 			{
-				"zero",
+				"decimal string: zero",
 				"0",
 				0,
 			},
 			{
-				"positive",
+				"decimal string: unsigned",
 				"1231006505",
 				1231006505,
 			},
 			{
-				"negative",
+				"decimal string: signed positive",
+				"+1231006505",
+				1231006505,
+			},
+			{
+				"decimal string: signed negative",
 				"-1231006505",
 				-1231006505,
 			},

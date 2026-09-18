@@ -3,7 +3,9 @@ package timeutil
 import (
 	"database/sql"
 	"database/sql/driver"
-	"encoding/json"
+	"encoding"
+	"encoding/json/jsontext"
+	"encoding/json/v2"
 	"errors"
 	"fmt"
 	"io"
@@ -15,13 +17,17 @@ import (
 )
 
 var (
-	_ fmt.Stringer        = Timestamp{}
-	_ driver.Valuer       = Timestamp{}
-	_ sql.Scanner         = &Timestamp{}
-	_ json.Marshaler      = Timestamp{}
-	_ graphql.Marshaler   = Timestamp{}
-	_ json.Unmarshaler    = &Timestamp{}
-	_ graphql.Unmarshaler = &Timestamp{}
+	_ fmt.Stringer             = Timestamp{}
+	_ driver.Valuer            = Timestamp{}
+	_ sql.Scanner              = &Timestamp{}
+	_ encoding.TextMarshaler   = Timestamp{}
+	_ json.MarshalerTo         = Timestamp{}
+	_ json.Marshaler           = Timestamp{}
+	_ graphql.Marshaler        = Timestamp{}
+	_ encoding.TextUnmarshaler = &Timestamp{}
+	_ json.UnmarshalerFrom     = &Timestamp{}
+	_ json.Unmarshaler         = &Timestamp{}
+	_ graphql.Unmarshaler      = &Timestamp{}
 )
 
 // Timestamp represents a point in time in UTC.
@@ -44,6 +50,21 @@ func (ts *Timestamp) setTime(t time.Time) {
 // NewTimestampFromUnix returns a new [Timestamp] from an int64 representing a Unix timestamp in seconds.
 func NewTimestampFromUnix(sec int64) Timestamp {
 	return NewTimestamp(time.Unix(sec, 0))
+}
+
+func (ts *Timestamp) setString(s string) error {
+	if len(s) == 0 {
+		return errors.New("invalid decimal string: empty")
+	}
+
+	i, err := strconv.ParseInt(s, 10, 64)
+	if err != nil {
+		return fmt.Errorf("invalid decimal string: %w", err)
+	}
+
+	ts.setTime(time.Unix(i, 0))
+
+	return nil
 }
 
 // Time returns the underlying [time.Time].
@@ -72,51 +93,51 @@ func (ts Timestamp) Value() (driver.Value, error) {
 // It decodes one of the following values representing a Unix timestamp in seconds into ts:
 //   - int64
 //   - uint64 (<= [math.MaxInt64])
-//   - []byte (decimal string)
+//   - decimal string bytes
 func (ts *Timestamp) Scan(src any) error {
 	if src == nil {
-		return errors.New("invalid source: nil")
+		return errors.New("unsupported source: nil")
 	}
 
-	switch v := src.(type) {
-
+	switch src := src.(type) {
 	case int64:
-		ts.setTime(time.Unix(v, 0))
+		ts.setTime(time.Unix(src, 0))
 
 		return nil
 
 	case uint64:
-		if v > math.MaxInt64 {
-			return errors.New("invalid source: exceeds int64 range")
+		if src > math.MaxInt64 {
+			return errors.New("invalid uint64 source: exceeds int64 range")
 		}
 
-		ts.setTime(time.Unix(int64(v), 0))
+		ts.setTime(time.Unix(int64(src), 0))
 
 		return nil
 
 	case []byte:
-		if len(v) == 0 {
-			return errors.New("invalid source: empty []byte")
-		}
-
-		i, err := strconv.ParseInt(string(v), 10, 64)
-		if err != nil {
-			return fmt.Errorf("invalid source: %w", err)
-		}
-
-		ts.setTime(time.Unix(i, 0))
-
-		return nil
+		return ts.setString(string(src))
 
 	default:
 		return fmt.Errorf("unsupported source type: %T", src)
 	}
 }
 
+// MarshalText implements [encoding.TextMarshaler].
+// It encodes ts as a decimal string representing the Unix timestamp in seconds.
+func (ts Timestamp) MarshalText() ([]byte, error) {
+	return []byte(ts.String()), nil
+}
+
+// MarshalJSONTo implements [json.MarshalerTo].
+// It encodes ts as an unquoted decimal string representing the Unix timestamp in seconds and writes it to enc.
+func (ts Timestamp) MarshalJSONTo(enc *jsontext.Encoder) error {
+	return json.MarshalEncode(enc, ts.Unix())
+}
+
 // MarshalJSON implements [json.Marshaler].
-// It encodes ts as an unquoted decimal string representing the Unix timestamp in seconds.
+// It is like [Timestamp.MarshalJSONTo] but returns the encoded bytes instead of writing them to a [jsontext.Encoder].
 func (ts Timestamp) MarshalJSON() ([]byte, error) {
-	return json.Marshal(ts.Unix())
+	return json.Marshal(ts)
 }
 
 // MarshalGQL implements [graphql.Marshaler].
@@ -125,47 +146,46 @@ func (ts Timestamp) MarshalGQL(w io.Writer) {
 	_, _ = io.WriteString(w, strconv.Quote(ts.String()))
 }
 
+// UnmarshalText implements [encoding.TextUnmarshaler].
+// It decodes a decimal string representing a Unix timestamp in seconds into ts.
+func (ts *Timestamp) UnmarshalText(text []byte) error {
+	return ts.setString(string(text))
+}
+
+// UnmarshalJSONFrom implements [json.UnmarshalerFrom].
+// It decodes an unquoted decimal string representing a Unix timestamp in seconds from dec into ts.
+func (ts *Timestamp) UnmarshalJSONFrom(dec *jsontext.Decoder) error {
+	switch k := dec.PeekKind(); k {
+	case jsontext.KindNumber:
+		v, err := dec.ReadValue()
+		if err != nil {
+			return fmt.Errorf("failed to read value: %w", err)
+		}
+
+		return ts.UnmarshalText(v)
+
+	default:
+		return fmt.Errorf("unsupported json token kind: %v", k)
+	}
+}
+
 // UnmarshalJSON implements [json.Unmarshaler].
-// It decodes an unquoted decimal string representing a Unix timestamp in seconds into ts.
+// It is like [Timestamp.UnmarshalJSONFrom] but decodes b instead of reading from a [jsontext.Decoder].
 func (ts *Timestamp) UnmarshalJSON(b []byte) error {
-	if len(b) == 0 {
-		return errors.New("invalid json value: empty")
-	}
-	if string(b) == "null" {
-		return errors.New("invalid json value: null")
-	}
-
-	var i int64
-	if err := json.Unmarshal(b, &i); err != nil {
-		return fmt.Errorf("invalid json number: %w", err)
-	}
-
-	ts.setTime(time.Unix(i, 0))
-
-	return nil
+	return json.Unmarshal(b, ts)
 }
 
 // UnmarshalGQL implements [graphql.Unmarshaler].
 // It decodes a decimal string representing a Unix timestamp in seconds into ts.
 func (ts *Timestamp) UnmarshalGQL(v any) error {
 	if v == nil {
-		return errors.New("invalid graphql value: nil")
+		return errors.New("unsupported value: nil")
 	}
 
 	s, ok := v.(string)
 	if !ok {
-		return fmt.Errorf("unsupported graphql value type: %T", v)
-	}
-	if len(s) == 0 {
-		return errors.New("invalid graphql string: empty")
+		return fmt.Errorf("unsupported value type: %T", v)
 	}
 
-	i, err := strconv.ParseInt(s, 10, 64)
-	if err != nil {
-		return fmt.Errorf("invalid graphql string: %w", err)
-	}
-
-	ts.setTime(time.Unix(i, 0))
-
-	return nil
+	return ts.UnmarshalText([]byte(s))
 }
