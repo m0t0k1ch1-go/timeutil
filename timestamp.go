@@ -1,6 +1,7 @@
 package timeutil
 
 import (
+	"database/sql"
 	"database/sql/driver"
 	"encoding/json"
 	"errors"
@@ -9,6 +10,18 @@ import (
 	"math"
 	"strconv"
 	"time"
+
+	"github.com/99designs/gqlgen/graphql"
+)
+
+var (
+	_ fmt.Stringer        = Timestamp{}
+	_ driver.Valuer       = Timestamp{}
+	_ sql.Scanner         = &Timestamp{}
+	_ json.Marshaler      = Timestamp{}
+	_ graphql.Marshaler   = Timestamp{}
+	_ json.Unmarshaler    = &Timestamp{}
+	_ graphql.Unmarshaler = &Timestamp{}
 )
 
 // Timestamp represents a point in time in UTC.
