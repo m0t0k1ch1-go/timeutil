@@ -77,6 +77,16 @@ func (ts Timestamp) Unix() int64 {
 	return ts.t.Unix()
 }
 
+// Before reports whether ts is before ts2.
+func (ts Timestamp) Before(ts2 Timestamp) bool {
+	return ts.Time().Before(ts2.Time())
+}
+
+// After reports whether ts is after ts2.
+func (ts Timestamp) After(ts2 Timestamp) bool {
+	return ts.Time().After(ts2.Time())
+}
+
 // Add returns a new [Timestamp] representing the time ts+d.
 func (ts Timestamp) Add(d time.Duration) Timestamp {
 	return NewTimestamp(ts.t.Add(d))

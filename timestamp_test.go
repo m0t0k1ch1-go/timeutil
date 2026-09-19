@@ -90,6 +90,100 @@ func TestNewTimestampFromUnix(t *testing.T) {
 	})
 }
 
+func TestTimestamp_Before(t *testing.T) {
+	t.Run("success", func(t *testing.T) {
+		type input struct {
+			ts  timeutil.Timestamp
+			ts2 timeutil.Timestamp
+		}
+
+		tcs := []struct {
+			name string
+			in   input
+			want bool
+		}{
+			{
+				"ts == ts2",
+				input{
+					timeutil.NewTimestampFromUnix(1231006505),
+					timeutil.NewTimestampFromUnix(1231006505),
+				},
+				false,
+			},
+			{
+				"ts < ts2",
+				input{
+					timeutil.NewTimestampFromUnix(1231006505),
+					timeutil.NewTimestampFromUnix(1231006506),
+				},
+				true,
+			},
+			{
+				"ts > ts2",
+				input{
+					timeutil.NewTimestampFromUnix(1231006505),
+					timeutil.NewTimestampFromUnix(1231006504),
+				},
+				false,
+			},
+		}
+
+		for _, tc := range tcs {
+			t.Run(tc.name, func(t *testing.T) {
+				ok := tc.in.ts.Before(tc.in.ts2)
+				require.Equal(t, tc.want, ok)
+			})
+		}
+	})
+}
+
+func TestTimestamp_After(t *testing.T) {
+	t.Run("success", func(t *testing.T) {
+		type input struct {
+			ts  timeutil.Timestamp
+			ts2 timeutil.Timestamp
+		}
+
+		tcs := []struct {
+			name string
+			in   input
+			want bool
+		}{
+			{
+				"ts == ts2",
+				input{
+					timeutil.NewTimestampFromUnix(1231006505),
+					timeutil.NewTimestampFromUnix(1231006505),
+				},
+				false,
+			},
+			{
+				"ts > ts2",
+				input{
+					timeutil.NewTimestampFromUnix(1231006505),
+					timeutil.NewTimestampFromUnix(1231006504),
+				},
+				true,
+			},
+			{
+				"ts < ts2",
+				input{
+					timeutil.NewTimestampFromUnix(1231006505),
+					timeutil.NewTimestampFromUnix(1231006506),
+				},
+				false,
+			},
+		}
+
+		for _, tc := range tcs {
+			t.Run(tc.name, func(t *testing.T) {
+				ok := tc.in.ts.After(tc.in.ts2)
+				require.Equal(t, tc.want, ok)
+			})
+		}
+	})
+}
+
 func TestTimestamp_Add(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		type input struct {
