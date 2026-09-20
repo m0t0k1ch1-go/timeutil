@@ -672,7 +672,7 @@ func TestTimestamp_JSONUnmarshaling(t *testing.T) {
 				"",
 			},
 			{
-				"unquoted string bytes: null",
+				"null",
 				[]byte(`null`),
 				"unsupported json token kind: null",
 			},
