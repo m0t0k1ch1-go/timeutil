@@ -709,7 +709,7 @@ func TestTimestamp_JSONUnmarshaling(t *testing.T) {
 			{
 				"unquoted decimal string bytes: truncated",
 				[]byte(`0.`),
-				"failed to read value",
+				"failed to read token",
 			},
 			{
 				"unquoted decimal string bytes: fractional",
