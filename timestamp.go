@@ -172,12 +172,12 @@ func (ts *Timestamp) UnmarshalText(text []byte) error {
 func (ts *Timestamp) UnmarshalJSONFrom(dec *jsontext.Decoder) error {
 	switch k := dec.PeekKind(); k {
 	case jsontext.KindNumber, jsontext.KindString:
-		tok, err := dec.ReadToken()
+		t, err := dec.ReadToken()
 		if err != nil {
 			return fmt.Errorf("failed to read token: %w", err)
 		}
 
-		return ts.UnmarshalText([]byte(tok.String()))
+		return ts.UnmarshalText([]byte(t.String()))
 
 	default:
 		return fmt.Errorf("unsupported json token kind: %v", k)
