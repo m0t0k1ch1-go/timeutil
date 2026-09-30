@@ -677,9 +677,29 @@ func TestTimestamp_JSONUnmarshaling(t *testing.T) {
 				"unsupported json token kind: null",
 			},
 			{
-				"quoted decimal string bytes",
-				[]byte(`"0"`),
-				"unsupported json token kind: string",
+				"true",
+				[]byte(`true`),
+				"unsupported json token kind: true",
+			},
+			{
+				"quoted string bytes: empty",
+				[]byte(`""`),
+				"invalid decimal string: empty",
+			},
+			{
+				"quoted string bytes: invalid",
+				[]byte(`"invalid"`),
+				"invalid decimal string",
+			},
+			{
+				"quoted decimal string bytes: truncated",
+				[]byte(`"0`),
+				"failed to read token",
+			},
+			{
+				"quoted decimal string bytes: fractional",
+				[]byte(`"1231006505.0"`),
+				"invalid decimal string",
 			},
 			{
 				"unquoted decimal string bytes: signed positive",
@@ -740,6 +760,26 @@ func TestTimestamp_JSONUnmarshaling(t *testing.T) {
 			{
 				"unquoted decimal string bytes: signed negative",
 				[]byte(`-1231006505`),
+				-1231006505,
+			},
+			{
+				"quoted decimal string bytes: zero",
+				[]byte(`"0"`),
+				0,
+			},
+			{
+				"quoted decimal string bytes: unsigned",
+				[]byte(`"1231006505"`),
+				1231006505,
+			},
+			{
+				"quoted decimal string bytes: signed positive",
+				[]byte(`"+1231006505"`),
+				1231006505,
+			},
+			{
+				"quoted decimal string bytes: signed negative",
+				[]byte(`"-1231006505"`),
 				-1231006505,
 			},
 		}

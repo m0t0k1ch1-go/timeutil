@@ -168,7 +168,7 @@ func (ts *Timestamp) UnmarshalText(text []byte) error {
 }
 
 // UnmarshalJSONFrom implements [json.UnmarshalerFrom].
-// It decodes an unquoted decimal string representing a Unix timestamp in seconds from dec into ts.
+// It decodes an unquoted or quoted decimal string representing a Unix timestamp in seconds from dec into ts.
 func (ts *Timestamp) UnmarshalJSONFrom(dec *jsontext.Decoder) error {
 	switch k := dec.PeekKind(); k {
 	case jsontext.KindNumber:
@@ -178,6 +178,14 @@ func (ts *Timestamp) UnmarshalJSONFrom(dec *jsontext.Decoder) error {
 		}
 
 		return ts.UnmarshalText(v)
+
+	case jsontext.KindString:
+		tok, err := dec.ReadToken()
+		if err != nil {
+			return fmt.Errorf("failed to read token: %w", err)
+		}
+
+		return ts.UnmarshalText([]byte(tok.String()))
 
 	default:
 		return fmt.Errorf("unsupported json token kind: %v", k)
