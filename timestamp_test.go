@@ -677,11 +677,6 @@ func TestTimestamp_JSONUnmarshaling(t *testing.T) {
 				"unsupported json token kind: null",
 			},
 			{
-				"quoted decimal string bytes",
-				[]byte(`"0"`),
-				"unsupported json token kind: string",
-			},
-			{
 				"unquoted decimal string bytes: signed positive",
 				[]byte(`+1231006505`),
 				"unsupported json token kind: invalid",
@@ -689,7 +684,7 @@ func TestTimestamp_JSONUnmarshaling(t *testing.T) {
 			{
 				"unquoted decimal string bytes: truncated",
 				[]byte(`0.`),
-				"failed to read value",
+				"failed to read token",
 			},
 			{
 				"unquoted decimal string bytes: fractional",
@@ -704,6 +699,31 @@ func TestTimestamp_JSONUnmarshaling(t *testing.T) {
 			{
 				"unquoted decimal string bytes: exceeds int64 range",
 				[]byte(`9223372036854775808`),
+				"invalid decimal string",
+			},
+			{
+				"quoted decimal string bytes: truncated",
+				[]byte(`"0`),
+				"failed to read token",
+			},
+			{
+				"quoted string bytes: empty",
+				[]byte(`""`),
+				"invalid decimal string: empty",
+			},
+			{
+				"quoted decimal string bytes: fractional",
+				[]byte(`"1231006505.0"`),
+				"invalid decimal string",
+			},
+			{
+				"quoted decimal string bytes: exponential",
+				[]byte(`"1231006505e0"`),
+				"invalid decimal string",
+			},
+			{
+				"quoted string bytes: exceeds int64 range",
+				[]byte(`"9223372036854775808"`),
 				"invalid decimal string",
 			},
 		}
@@ -740,6 +760,26 @@ func TestTimestamp_JSONUnmarshaling(t *testing.T) {
 			{
 				"unquoted decimal string bytes: signed negative",
 				[]byte(`-1231006505`),
+				-1231006505,
+			},
+			{
+				"quoted decimal string bytes: zero",
+				[]byte(`"0"`),
+				0,
+			},
+			{
+				"quoted decimal string bytes: unsigned",
+				[]byte(`"1231006505"`),
+				1231006505,
+			},
+			{
+				"quoted decimal string bytes: signed positive",
+				[]byte(`"+1231006505"`),
+				1231006505,
+			},
+			{
+				"quoted decimal string bytes: signed negative",
+				[]byte(`"-1231006505"`),
 				-1231006505,
 			},
 		}
