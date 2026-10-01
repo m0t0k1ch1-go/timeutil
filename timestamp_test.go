@@ -44,12 +44,23 @@ func TestNewTimestamp(t *testing.T) {
 				time.Date(1970, 1, 1, 9, 0, 0, 0, time.FixedZone("JST", 9*60*60)),
 				0,
 			},
+			{
+				"positive with sub-second part",
+				time.Date(2009, 1, 3, 18, 15, 5, 999_999_999, time.UTC),
+				1231006505,
+			},
+			{
+				"negative with sub-second part",
+				time.Unix(-1231006505, 999_999_999),
+				-1231006505,
+			},
 		}
 
 		for _, tc := range tcs {
 			t.Run(tc.name, func(t *testing.T) {
 				ts := timeutil.NewTimestamp(tc.in)
 				require.Equal(t, tc.want, ts.Unix())
+				require.Equal(t, 0, ts.Time().Nanosecond())
 				require.Equal(t, time.UTC, ts.Time().Location())
 			})
 		}
@@ -111,6 +122,14 @@ func TestTimestamp_Before(t *testing.T) {
 				false,
 			},
 			{
+				"ts and ts2 within the same second",
+				input{
+					timeutil.NewTimestamp(time.Date(2009, 1, 3, 18, 15, 5, 100_000_000, time.UTC)),
+					timeutil.NewTimestamp(time.Date(2009, 1, 3, 18, 15, 5, 900_000_000, time.UTC)),
+				},
+				false,
+			},
+			{
 				"ts < ts2",
 				input{
 					timeutil.NewTimestampFromUnix(1231006505),
@@ -154,6 +173,14 @@ func TestTimestamp_After(t *testing.T) {
 				input{
 					timeutil.NewTimestampFromUnix(1231006505),
 					timeutil.NewTimestampFromUnix(1231006505),
+				},
+				false,
+			},
+			{
+				"ts and ts2 within the same second",
+				input{
+					timeutil.NewTimestamp(time.Date(2009, 1, 3, 18, 15, 5, 100_000_000, time.UTC)),
+					timeutil.NewTimestamp(time.Date(2009, 1, 3, 18, 15, 5, 900_000_000, time.UTC)),
 				},
 				false,
 			},
@@ -220,6 +247,22 @@ func TestTimestamp_Add(t *testing.T) {
 				},
 				1231006504,
 			},
+			{
+				"positive with sub-second part",
+				input{
+					timeutil.NewTimestampFromUnix(1231006505),
+					1500 * time.Millisecond,
+				},
+				1231006506,
+			},
+			{
+				"negative with sub-second part",
+				input{
+					timeutil.NewTimestampFromUnix(1231006505),
+					-1500 * time.Millisecond,
+				},
+				1231006503,
+			},
 		}
 
 		for _, tc := range tcs {
@@ -228,6 +271,7 @@ func TestTimestamp_Add(t *testing.T) {
 				tsAfter := tsBefore.Add(tc.in.d)
 				require.Equal(t, tc.in.ts.Unix(), tsBefore.Unix())
 				require.Equal(t, tc.want, tsAfter.Unix())
+				require.Equal(t, 0, tsAfter.Time().Nanosecond())
 				require.Equal(t, time.UTC, tsAfter.Time().Location())
 			})
 		}
@@ -414,6 +458,48 @@ func TestTimestamp_Scan(t *testing.T) {
 				require.NoError(t, err)
 				require.Equal(t, tc.want, ts.Unix())
 				require.Equal(t, time.UTC, ts.Time().Location())
+			})
+		}
+	})
+}
+
+func TestTimestamp_ValueScanRoundTrip(t *testing.T) {
+	t.Run("success", func(t *testing.T) {
+		tcs := []struct {
+			name string
+			in   timeutil.Timestamp
+		}{
+			{
+				"zero",
+				timeutil.NewTimestampFromUnix(0),
+			},
+			{
+				"positive",
+				timeutil.NewTimestampFromUnix(1231006505),
+			},
+			{
+				"negative",
+				timeutil.NewTimestampFromUnix(-1231006505),
+			},
+			{
+				"positive with sub-second part",
+				timeutil.NewTimestamp(time.Date(2009, 1, 3, 18, 15, 5, 999_999_999, time.UTC)),
+			},
+			{
+				"negative with sub-second part",
+				timeutil.NewTimestamp(time.Unix(-1231006505, 999_999_999)),
+			},
+		}
+
+		for _, tc := range tcs {
+			t.Run(tc.name, func(t *testing.T) {
+				v, err := tc.in.Value()
+				require.NoError(t, err)
+
+				var ts timeutil.Timestamp
+				err = ts.Scan(v)
+				require.NoError(t, err)
+				require.Equal(t, tc.in.Time(), ts.Time())
 			})
 		}
 	})

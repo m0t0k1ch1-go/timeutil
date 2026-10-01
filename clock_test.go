@@ -16,7 +16,7 @@ func TestClock(t *testing.T) {
 	got := clk.Now()
 	after := time.Now()
 
-	require.False(t, got.Time().Before(before))
+	require.False(t, got.Time().Before(before.Truncate(time.Second)))
 	require.False(t, got.Time().After(after))
 	require.Equal(t, time.UTC, got.Time().Location())
 }
