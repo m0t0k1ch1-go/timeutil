@@ -40,19 +40,9 @@ func TestNewTimestamp(t *testing.T) {
 			want time.Time
 		}{
 			{
-				"Unix epoch in JST",
-				time.Date(1970, 1, 1, 9, 0, 0, 0, time.FixedZone("JST", 9*60*60)),
-				time.Date(1970, 1, 1, 0, 0, 0, 0, time.UTC),
-			},
-			{
-				"positive with sub-second part",
-				time.Date(2009, 1, 3, 18, 15, 5, 999_999_999, time.UTC),
-				time.Date(2009, 1, 3, 18, 15, 5, 0, time.UTC),
-			},
-			{
-				"negative with sub-second part",
-				time.Unix(-1231006505, 999_999_999),
-				time.Date(1930, 12, 29, 5, 44, 55, 0, time.UTC),
+				"Unix epoch in JST with sub-second part",
+				time.Date(1970, 1, 1, 9, 0, 0, 999_999_999, time.FixedZone("JST", 9*60*60)),
+				time.Unix(0, 0).UTC(),
 			},
 		}
 
@@ -75,17 +65,17 @@ func TestNewTimestampFromUnix(t *testing.T) {
 			{
 				"zero",
 				0,
-				time.Date(1970, 1, 1, 0, 0, 0, 0, time.UTC),
+				time.Unix(0, 0).UTC(),
 			},
 			{
 				"positive",
 				1231006505,
-				time.Date(2009, 1, 3, 18, 15, 5, 0, time.UTC),
+				time.Unix(1231006505, 0).UTC(),
 			},
 			{
 				"negative",
 				-1231006505,
-				time.Date(1930, 12, 29, 5, 44, 55, 0, time.UTC),
+				time.Unix(-1231006505, 0).UTC(),
 			},
 		}
 
@@ -226,7 +216,7 @@ func TestTimestamp_Add(t *testing.T) {
 					timeutil.NewTimestampFromUnix(1231006505),
 					0,
 				},
-				time.Date(2009, 1, 3, 18, 15, 5, 0, time.UTC),
+				time.Unix(1231006505, 0).UTC(),
 			},
 			{
 				"positive",
@@ -234,7 +224,7 @@ func TestTimestamp_Add(t *testing.T) {
 					timeutil.NewTimestampFromUnix(1231006505),
 					time.Second,
 				},
-				time.Date(2009, 1, 3, 18, 15, 6, 0, time.UTC),
+				time.Unix(1231006506, 0).UTC(),
 			},
 			{
 				"negative",
@@ -242,7 +232,7 @@ func TestTimestamp_Add(t *testing.T) {
 					timeutil.NewTimestampFromUnix(1231006505),
 					-time.Second,
 				},
-				time.Date(2009, 1, 3, 18, 15, 4, 0, time.UTC),
+				time.Unix(1231006504, 0).UTC(),
 			},
 			{
 				"positive with sub-second part",
@@ -250,7 +240,7 @@ func TestTimestamp_Add(t *testing.T) {
 					timeutil.NewTimestampFromUnix(1231006505),
 					1500 * time.Millisecond,
 				},
-				time.Date(2009, 1, 3, 18, 15, 6, 0, time.UTC),
+				time.Unix(1231006506, 0).UTC(),
 			},
 			{
 				"negative with sub-second part",
@@ -258,7 +248,7 @@ func TestTimestamp_Add(t *testing.T) {
 					timeutil.NewTimestampFromUnix(1231006505),
 					-1500 * time.Millisecond,
 				},
-				time.Date(2009, 1, 3, 18, 15, 3, 0, time.UTC),
+				time.Unix(1231006503, 0).UTC(),
 			},
 		}
 
@@ -412,37 +402,37 @@ func TestTimestamp_Scan(t *testing.T) {
 			{
 				"int64: zero",
 				int64(0),
-				time.Date(1970, 1, 1, 0, 0, 0, 0, time.UTC),
+				time.Unix(0, 0).UTC(),
 			},
 			{
 				"int64: positive",
 				int64(1231006505),
-				time.Date(2009, 1, 3, 18, 15, 5, 0, time.UTC),
+				time.Unix(1231006505, 0).UTC(),
 			},
 			{
 				"int64: negative",
 				int64(-1231006505),
-				time.Date(1930, 12, 29, 5, 44, 55, 0, time.UTC),
+				time.Unix(-1231006505, 0).UTC(),
 			},
 			{
 				"uint64",
 				uint64(1231006505),
-				time.Date(2009, 1, 3, 18, 15, 5, 0, time.UTC),
+				time.Unix(1231006505, 0).UTC(),
 			},
 			{
 				"decimal string bytes: unsigned",
 				[]byte("1231006505"),
-				time.Date(2009, 1, 3, 18, 15, 5, 0, time.UTC),
+				time.Unix(1231006505, 0).UTC(),
 			},
 			{
 				"decimal string bytes: signed positive",
 				[]byte("+1231006505"),
-				time.Date(2009, 1, 3, 18, 15, 5, 0, time.UTC),
+				time.Unix(1231006505, 0).UTC(),
 			},
 			{
 				"decimal string bytes: signed negative",
 				[]byte("-1231006505"),
-				time.Date(1930, 12, 29, 5, 44, 55, 0, time.UTC),
+				time.Unix(-1231006505, 0).UTC(),
 			},
 		}
 
@@ -685,22 +675,22 @@ func TestTimestamp_UnmarshalText(t *testing.T) {
 			{
 				"decimal string bytes: zero",
 				[]byte("0"),
-				time.Date(1970, 1, 1, 0, 0, 0, 0, time.UTC),
+				time.Unix(0, 0).UTC(),
 			},
 			{
 				"decimal string bytes: unsigned",
 				[]byte("1231006505"),
-				time.Date(2009, 1, 3, 18, 15, 5, 0, time.UTC),
+				time.Unix(1231006505, 0).UTC(),
 			},
 			{
 				"decimal string bytes: signed positive",
 				[]byte("+1231006505"),
-				time.Date(2009, 1, 3, 18, 15, 5, 0, time.UTC),
+				time.Unix(1231006505, 0).UTC(),
 			},
 			{
 				"decimal string bytes: signed negative",
 				[]byte("-1231006505"),
-				time.Date(1930, 12, 29, 5, 44, 55, 0, time.UTC),
+				time.Unix(-1231006505, 0).UTC(),
 			},
 		}
 
@@ -829,37 +819,37 @@ func TestTimestamp_JSONUnmarshaling(t *testing.T) {
 			{
 				"unquoted decimal string bytes: zero",
 				[]byte(`0`),
-				time.Date(1970, 1, 1, 0, 0, 0, 0, time.UTC),
+				time.Unix(0, 0).UTC(),
 			},
 			{
 				"unquoted decimal string bytes: unsigned",
 				[]byte(`1231006505`),
-				time.Date(2009, 1, 3, 18, 15, 5, 0, time.UTC),
+				time.Unix(1231006505, 0).UTC(),
 			},
 			{
 				"unquoted decimal string bytes: signed negative",
 				[]byte(`-1231006505`),
-				time.Date(1930, 12, 29, 5, 44, 55, 0, time.UTC),
+				time.Unix(-1231006505, 0).UTC(),
 			},
 			{
 				"quoted decimal string bytes: zero",
 				[]byte(`"0"`),
-				time.Date(1970, 1, 1, 0, 0, 0, 0, time.UTC),
+				time.Unix(0, 0).UTC(),
 			},
 			{
 				"quoted decimal string bytes: unsigned",
 				[]byte(`"1231006505"`),
-				time.Date(2009, 1, 3, 18, 15, 5, 0, time.UTC),
+				time.Unix(1231006505, 0).UTC(),
 			},
 			{
 				"quoted decimal string bytes: signed positive",
 				[]byte(`"+1231006505"`),
-				time.Date(2009, 1, 3, 18, 15, 5, 0, time.UTC),
+				time.Unix(1231006505, 0).UTC(),
 			},
 			{
 				"quoted decimal string bytes: signed negative",
 				[]byte(`"-1231006505"`),
-				time.Date(1930, 12, 29, 5, 44, 55, 0, time.UTC),
+				time.Unix(-1231006505, 0).UTC(),
 			},
 		}
 
@@ -945,22 +935,22 @@ func TestTimestamp_UnmarshalGQL(t *testing.T) {
 			{
 				"decimal string: zero",
 				"0",
-				time.Date(1970, 1, 1, 0, 0, 0, 0, time.UTC),
+				time.Unix(0, 0).UTC(),
 			},
 			{
 				"decimal string: unsigned",
 				"1231006505",
-				time.Date(2009, 1, 3, 18, 15, 5, 0, time.UTC),
+				time.Unix(1231006505, 0).UTC(),
 			},
 			{
 				"decimal string: signed positive",
 				"+1231006505",
-				time.Date(2009, 1, 3, 18, 15, 5, 0, time.UTC),
+				time.Unix(1231006505, 0).UTC(),
 			},
 			{
 				"decimal string: signed negative",
 				"-1231006505",
-				time.Date(1930, 12, 29, 5, 44, 55, 0, time.UTC),
+				time.Unix(-1231006505, 0).UTC(),
 			},
 		}
 
