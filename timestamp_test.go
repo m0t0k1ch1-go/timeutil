@@ -37,31 +37,29 @@ func TestNewTimestamp(t *testing.T) {
 		tcs := []struct {
 			name string
 			in   time.Time
-			want int64
+			want time.Time
 		}{
 			{
 				"Unix epoch in JST",
 				time.Date(1970, 1, 1, 9, 0, 0, 0, time.FixedZone("JST", 9*60*60)),
-				0,
+				time.Date(1970, 1, 1, 0, 0, 0, 0, time.UTC),
 			},
 			{
 				"positive with sub-second part",
 				time.Date(2009, 1, 3, 18, 15, 5, 999_999_999, time.UTC),
-				1231006505,
+				time.Date(2009, 1, 3, 18, 15, 5, 0, time.UTC),
 			},
 			{
 				"negative with sub-second part",
 				time.Unix(-1231006505, 999_999_999),
-				-1231006505,
+				time.Date(1930, 12, 29, 5, 44, 55, 0, time.UTC),
 			},
 		}
 
 		for _, tc := range tcs {
 			t.Run(tc.name, func(t *testing.T) {
 				ts := timeutil.NewTimestamp(tc.in)
-				require.Equal(t, tc.want, ts.Unix())
-				require.Equal(t, 0, ts.Time().Nanosecond())
-				require.Equal(t, time.UTC, ts.Time().Location())
+				require.Equal(t, tc.want, ts.Time())
 			})
 		}
 	})
@@ -72,30 +70,29 @@ func TestNewTimestampFromUnix(t *testing.T) {
 		tcs := []struct {
 			name string
 			in   int64
-			want int64
+			want time.Time
 		}{
 			{
 				"zero",
 				0,
-				0,
+				time.Date(1970, 1, 1, 0, 0, 0, 0, time.UTC),
 			},
 			{
 				"positive",
 				1231006505,
-				1231006505,
+				time.Date(2009, 1, 3, 18, 15, 5, 0, time.UTC),
 			},
 			{
 				"negative",
 				-1231006505,
-				-1231006505,
+				time.Date(1930, 12, 29, 5, 44, 55, 0, time.UTC),
 			},
 		}
 
 		for _, tc := range tcs {
 			t.Run(tc.name, func(t *testing.T) {
 				ts := timeutil.NewTimestampFromUnix(tc.in)
-				require.Equal(t, tc.want, ts.Unix())
-				require.Equal(t, time.UTC, ts.Time().Location())
+				require.Equal(t, tc.want, ts.Time())
 			})
 		}
 	})
@@ -221,7 +218,7 @@ func TestTimestamp_Add(t *testing.T) {
 		tcs := []struct {
 			name string
 			in   input
-			want int64
+			want time.Time
 		}{
 			{
 				"zero",
@@ -229,7 +226,7 @@ func TestTimestamp_Add(t *testing.T) {
 					timeutil.NewTimestampFromUnix(1231006505),
 					0,
 				},
-				1231006505,
+				time.Date(2009, 1, 3, 18, 15, 5, 0, time.UTC),
 			},
 			{
 				"positive",
@@ -237,7 +234,7 @@ func TestTimestamp_Add(t *testing.T) {
 					timeutil.NewTimestampFromUnix(1231006505),
 					time.Second,
 				},
-				1231006506,
+				time.Date(2009, 1, 3, 18, 15, 6, 0, time.UTC),
 			},
 			{
 				"negative",
@@ -245,7 +242,7 @@ func TestTimestamp_Add(t *testing.T) {
 					timeutil.NewTimestampFromUnix(1231006505),
 					-time.Second,
 				},
-				1231006504,
+				time.Date(2009, 1, 3, 18, 15, 4, 0, time.UTC),
 			},
 			{
 				"positive with sub-second part",
@@ -253,7 +250,7 @@ func TestTimestamp_Add(t *testing.T) {
 					timeutil.NewTimestampFromUnix(1231006505),
 					1500 * time.Millisecond,
 				},
-				1231006506,
+				time.Date(2009, 1, 3, 18, 15, 6, 0, time.UTC),
 			},
 			{
 				"negative with sub-second part",
@@ -261,7 +258,7 @@ func TestTimestamp_Add(t *testing.T) {
 					timeutil.NewTimestampFromUnix(1231006505),
 					-1500 * time.Millisecond,
 				},
-				1231006503,
+				time.Date(2009, 1, 3, 18, 15, 3, 0, time.UTC),
 			},
 		}
 
@@ -269,10 +266,8 @@ func TestTimestamp_Add(t *testing.T) {
 			t.Run(tc.name, func(t *testing.T) {
 				tsBefore := tc.in.ts
 				tsAfter := tsBefore.Add(tc.in.d)
-				require.Equal(t, tc.in.ts.Unix(), tsBefore.Unix())
-				require.Equal(t, tc.want, tsAfter.Unix())
-				require.Equal(t, 0, tsAfter.Time().Nanosecond())
-				require.Equal(t, time.UTC, tsAfter.Time().Location())
+				require.Equal(t, tc.in.ts.Time(), tsBefore.Time())
+				require.Equal(t, tc.want, tsAfter.Time())
 			})
 		}
 	})
@@ -412,42 +407,42 @@ func TestTimestamp_Scan(t *testing.T) {
 		tcs := []struct {
 			name string
 			in   any
-			want int64
+			want time.Time
 		}{
 			{
 				"int64: zero",
 				int64(0),
-				0,
+				time.Date(1970, 1, 1, 0, 0, 0, 0, time.UTC),
 			},
 			{
 				"int64: positive",
 				int64(1231006505),
-				1231006505,
+				time.Date(2009, 1, 3, 18, 15, 5, 0, time.UTC),
 			},
 			{
 				"int64: negative",
 				int64(-1231006505),
-				-1231006505,
+				time.Date(1930, 12, 29, 5, 44, 55, 0, time.UTC),
 			},
 			{
 				"uint64",
 				uint64(1231006505),
-				1231006505,
+				time.Date(2009, 1, 3, 18, 15, 5, 0, time.UTC),
 			},
 			{
 				"decimal string bytes: unsigned",
 				[]byte("1231006505"),
-				1231006505,
+				time.Date(2009, 1, 3, 18, 15, 5, 0, time.UTC),
 			},
 			{
 				"decimal string bytes: signed positive",
 				[]byte("+1231006505"),
-				1231006505,
+				time.Date(2009, 1, 3, 18, 15, 5, 0, time.UTC),
 			},
 			{
 				"decimal string bytes: signed negative",
 				[]byte("-1231006505"),
-				-1231006505,
+				time.Date(1930, 12, 29, 5, 44, 55, 0, time.UTC),
 			},
 		}
 
@@ -456,8 +451,7 @@ func TestTimestamp_Scan(t *testing.T) {
 				var ts timeutil.Timestamp
 				err := ts.Scan(tc.in)
 				require.NoError(t, err)
-				require.Equal(t, tc.want, ts.Unix())
-				require.Equal(t, time.UTC, ts.Time().Location())
+				require.Equal(t, tc.want, ts.Time())
 			})
 		}
 	})
@@ -686,27 +680,27 @@ func TestTimestamp_UnmarshalText(t *testing.T) {
 		tcs := []struct {
 			name string
 			in   []byte
-			want int64
+			want time.Time
 		}{
 			{
 				"decimal string bytes: zero",
 				[]byte("0"),
-				0,
+				time.Date(1970, 1, 1, 0, 0, 0, 0, time.UTC),
 			},
 			{
 				"decimal string bytes: unsigned",
 				[]byte("1231006505"),
-				1231006505,
+				time.Date(2009, 1, 3, 18, 15, 5, 0, time.UTC),
 			},
 			{
 				"decimal string bytes: signed positive",
 				[]byte("+1231006505"),
-				1231006505,
+				time.Date(2009, 1, 3, 18, 15, 5, 0, time.UTC),
 			},
 			{
 				"decimal string bytes: signed negative",
 				[]byte("-1231006505"),
-				-1231006505,
+				time.Date(1930, 12, 29, 5, 44, 55, 0, time.UTC),
 			},
 		}
 
@@ -715,8 +709,7 @@ func TestTimestamp_UnmarshalText(t *testing.T) {
 				var ts timeutil.Timestamp
 				err := ts.UnmarshalText(tc.in)
 				require.NoError(t, err)
-				require.Equal(t, tc.want, ts.Unix())
-				require.Equal(t, time.UTC, ts.Time().Location())
+				require.Equal(t, tc.want, ts.Time())
 			})
 		}
 	})
@@ -831,42 +824,42 @@ func TestTimestamp_JSONUnmarshaling(t *testing.T) {
 		tcs := []struct {
 			name string
 			in   []byte
-			want int64
+			want time.Time
 		}{
 			{
 				"unquoted decimal string bytes: zero",
 				[]byte(`0`),
-				0,
+				time.Date(1970, 1, 1, 0, 0, 0, 0, time.UTC),
 			},
 			{
 				"unquoted decimal string bytes: unsigned",
 				[]byte(`1231006505`),
-				1231006505,
+				time.Date(2009, 1, 3, 18, 15, 5, 0, time.UTC),
 			},
 			{
 				"unquoted decimal string bytes: signed negative",
 				[]byte(`-1231006505`),
-				-1231006505,
+				time.Date(1930, 12, 29, 5, 44, 55, 0, time.UTC),
 			},
 			{
 				"quoted decimal string bytes: zero",
 				[]byte(`"0"`),
-				0,
+				time.Date(1970, 1, 1, 0, 0, 0, 0, time.UTC),
 			},
 			{
 				"quoted decimal string bytes: unsigned",
 				[]byte(`"1231006505"`),
-				1231006505,
+				time.Date(2009, 1, 3, 18, 15, 5, 0, time.UTC),
 			},
 			{
 				"quoted decimal string bytes: signed positive",
 				[]byte(`"+1231006505"`),
-				1231006505,
+				time.Date(2009, 1, 3, 18, 15, 5, 0, time.UTC),
 			},
 			{
 				"quoted decimal string bytes: signed negative",
 				[]byte(`"-1231006505"`),
-				-1231006505,
+				time.Date(1930, 12, 29, 5, 44, 55, 0, time.UTC),
 			},
 		}
 
@@ -877,8 +870,7 @@ func TestTimestamp_JSONUnmarshaling(t *testing.T) {
 						var ts timeutil.Timestamp
 						err := dec.unmarshal(tc.in, &ts)
 						require.NoError(t, err)
-						require.Equal(t, tc.want, ts.Unix())
-						require.Equal(t, time.UTC, ts.Time().Location())
+						require.Equal(t, tc.want, ts.Time())
 					})
 				}
 			})
@@ -948,27 +940,27 @@ func TestTimestamp_UnmarshalGQL(t *testing.T) {
 		tcs := []struct {
 			name string
 			in   any
-			want int64
+			want time.Time
 		}{
 			{
 				"decimal string: zero",
 				"0",
-				0,
+				time.Date(1970, 1, 1, 0, 0, 0, 0, time.UTC),
 			},
 			{
 				"decimal string: unsigned",
 				"1231006505",
-				1231006505,
+				time.Date(2009, 1, 3, 18, 15, 5, 0, time.UTC),
 			},
 			{
 				"decimal string: signed positive",
 				"+1231006505",
-				1231006505,
+				time.Date(2009, 1, 3, 18, 15, 5, 0, time.UTC),
 			},
 			{
 				"decimal string: signed negative",
 				"-1231006505",
-				-1231006505,
+				time.Date(1930, 12, 29, 5, 44, 55, 0, time.UTC),
 			},
 		}
 
@@ -977,8 +969,7 @@ func TestTimestamp_UnmarshalGQL(t *testing.T) {
 				var ts timeutil.Timestamp
 				err := ts.UnmarshalGQL(tc.in)
 				require.NoError(t, err)
-				require.Equal(t, tc.want, ts.Unix())
-				require.Equal(t, time.UTC, ts.Time().Location())
+				require.Equal(t, tc.want, ts.Time())
 			})
 		}
 	})
