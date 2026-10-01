@@ -111,8 +111,8 @@ func TestTimestamp_Before(t *testing.T) {
 			{
 				"ts and ts2 within the same second",
 				input{
-					timeutil.NewTimestamp(time.Date(2009, 1, 3, 18, 15, 5, 100_000_000, time.UTC)),
-					timeutil.NewTimestamp(time.Date(2009, 1, 3, 18, 15, 5, 900_000_000, time.UTC)),
+					timeutil.NewTimestamp(time.Unix(1231006505, 0)),
+					timeutil.NewTimestamp(time.Unix(1231006505, 999_999_999)),
 				},
 				false,
 			},
@@ -166,8 +166,8 @@ func TestTimestamp_After(t *testing.T) {
 			{
 				"ts and ts2 within the same second",
 				input{
-					timeutil.NewTimestamp(time.Date(2009, 1, 3, 18, 15, 5, 100_000_000, time.UTC)),
-					timeutil.NewTimestamp(time.Date(2009, 1, 3, 18, 15, 5, 900_000_000, time.UTC)),
+					timeutil.NewTimestamp(time.Unix(1231006505, 0)),
+					timeutil.NewTimestamp(time.Unix(1231006505, 999_999_999)),
 				},
 				false,
 			},
@@ -467,7 +467,7 @@ func TestTimestamp_ValueScanRoundTrip(t *testing.T) {
 			},
 			{
 				"positive with sub-second part",
-				timeutil.NewTimestamp(time.Date(2009, 1, 3, 18, 15, 5, 999_999_999, time.UTC)),
+				timeutil.NewTimestamp(time.Unix(1231006505, 999_999_999)),
 			},
 			{
 				"negative with sub-second part",
