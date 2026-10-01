@@ -30,12 +30,13 @@ var (
 	_ graphql.Unmarshaler      = &Timestamp{}
 )
 
-// Timestamp represents a point in time in UTC.
+// Timestamp represents a point in time in UTC with second precision.
 type Timestamp struct {
 	t time.Time
 }
 
 // NewTimestamp returns a new [Timestamp] from a [time.Time].
+// It truncates t to second precision.
 func NewTimestamp(t time.Time) Timestamp {
 	var ts Timestamp
 	ts.setTime(t)
@@ -44,7 +45,7 @@ func NewTimestamp(t time.Time) Timestamp {
 }
 
 func (ts *Timestamp) setTime(t time.Time) {
-	ts.t = t.In(time.UTC)
+	ts.t = t.In(time.UTC).Truncate(time.Second)
 }
 
 // NewTimestampFromUnix returns a new [Timestamp] from an int64 representing a Unix timestamp in seconds.

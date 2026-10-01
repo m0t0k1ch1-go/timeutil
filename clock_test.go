@@ -12,12 +12,15 @@ import (
 func TestClock(t *testing.T) {
 	clk := timeutil.NewClock()
 
-	before := time.Now()
+	before := timeutil.NewTimestamp(time.Now())
+	time.Sleep(time.Second)
 	got := clk.Now()
-	after := time.Now()
+	time.Sleep(time.Second)
+	after := timeutil.NewTimestamp(time.Now())
 
-	require.False(t, got.Time().Before(before))
-	require.False(t, got.Time().After(after))
+	require.True(t, before.Before(got))
+	require.True(t, got.Before(after))
+	require.Equal(t, 0, got.Time().Nanosecond())
 	require.Equal(t, time.UTC, got.Time().Location())
 }
 
