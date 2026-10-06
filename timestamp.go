@@ -44,23 +44,23 @@ func NewTimestamp(t time.Time) Timestamp {
 	return ts
 }
 
-func (ts *Timestamp) setTime(t time.Time) {
-	ts.t = t.In(time.UTC).Truncate(time.Second)
-}
-
 // NewTimestampFromUnix returns a new [Timestamp] from an int64 representing a Unix timestamp in seconds.
 func NewTimestampFromUnix(sec int64) Timestamp {
 	return NewTimestamp(time.Unix(sec, 0))
 }
 
+func (ts *Timestamp) setTime(t time.Time) {
+	ts.t = t.In(time.UTC).Truncate(time.Second)
+}
+
 func (ts *Timestamp) setString(s string) error {
 	if len(s) == 0 {
-		return errors.New("invalid decimal string: empty")
+		return errors.New("empty")
 	}
 
 	i, err := strconv.ParseInt(s, 10, 64)
 	if err != nil {
-		return fmt.Errorf("invalid decimal string: %w", err)
+		return err
 	}
 
 	ts.setTime(time.Unix(i, 0))
@@ -131,7 +131,11 @@ func (ts *Timestamp) Scan(src any) error {
 		return nil
 
 	case []byte:
-		return ts.setString(string(src))
+		if err := ts.setString(string(src)); err != nil {
+			return fmt.Errorf("invalid bytes source: %w", err)
+		}
+
+		return nil
 
 	default:
 		return fmt.Errorf("unsupported source type: %T", src)
@@ -165,20 +169,36 @@ func (ts Timestamp) MarshalGQL(w io.Writer) {
 // UnmarshalText implements [encoding.TextUnmarshaler].
 // It decodes a decimal string representing a Unix timestamp in seconds into ts.
 func (ts *Timestamp) UnmarshalText(text []byte) error {
-	return ts.setString(string(text))
+	if err := ts.setString(string(text)); err != nil {
+		return fmt.Errorf("invalid string: %w", err)
+	}
+
+	return nil
 }
 
 // UnmarshalJSONFrom implements [json.UnmarshalerFrom].
 // It decodes an unquoted or quoted decimal string representing a Unix timestamp in seconds from dec into ts.
 func (ts *Timestamp) UnmarshalJSONFrom(dec *jsontext.Decoder) error {
 	switch k := dec.PeekKind(); k {
-	case jsontext.KindNumber, jsontext.KindString:
+	case jsontext.KindString:
+		var s string
+		if err := json.UnmarshalDecode(dec, &s); err != nil {
+			return fmt.Errorf("invalid string: %w", err)
+		}
+
+		return ts.UnmarshalText([]byte(s))
+
+	case jsontext.KindNumber:
 		t, err := dec.ReadToken()
 		if err != nil {
 			return fmt.Errorf("failed to read token: %w", err)
 		}
 
-		return ts.UnmarshalText([]byte(t.String()))
+		if err := ts.setString(t.String()); err != nil {
+			return fmt.Errorf("invalid number: %w", err)
+		}
+
+		return nil
 
 	default:
 		return fmt.Errorf("unsupported json token kind: %v", k)
@@ -195,13 +215,17 @@ func (ts *Timestamp) UnmarshalJSON(b []byte) error {
 // It decodes a decimal string representing a Unix timestamp in seconds into ts.
 func (ts *Timestamp) UnmarshalGQL(v any) error {
 	if v == nil {
-		return errors.New("unsupported value: nil")
+		return errors.New("unsupported input: nil")
 	}
 
 	s, ok := v.(string)
 	if !ok {
-		return fmt.Errorf("unsupported value type: %T", v)
+		return fmt.Errorf("unsupported input type: %T", v)
 	}
 
-	return ts.UnmarshalText([]byte(s))
+	if err := ts.setString(s); err != nil {
+		return fmt.Errorf("invalid string input: %w", err)
+	}
+
+	return nil
 }
