@@ -355,32 +355,32 @@ func TestTimestamp_Scan(t *testing.T) {
 			{
 				"bytes: empty",
 				[]byte{},
-				"invalid decimal string: empty",
+				"invalid bytes source: empty",
 			},
 			{
 				"bytes: invalid",
 				[]byte("invalid"),
-				"invalid decimal string",
+				"invalid bytes source",
 			},
 			{
 				"decimal string bytes: fractional",
 				[]byte("1231006505.0"),
-				"invalid decimal string",
+				"invalid bytes source",
 			},
 			{
 				"decimal string bytes: exponential",
 				[]byte("1231006505e0"),
-				"invalid decimal string",
+				"invalid bytes source",
 			},
 			{
 				"decimal string bytes: contains underscores",
 				[]byte("1_231_006_505"),
-				"invalid decimal string",
+				"invalid bytes source",
 			},
 			{
 				"decimal string bytes: exceeds int64 range",
 				[]byte("9223372036854775808"),
-				"invalid decimal string",
+				"invalid bytes source",
 			},
 		}
 
@@ -623,37 +623,37 @@ func TestTimestamp_UnmarshalText(t *testing.T) {
 			{
 				"nil",
 				nil,
-				"invalid decimal string: empty",
+				"invalid string: empty",
 			},
 			{
 				"bytes: empty",
 				[]byte{},
-				"invalid decimal string: empty",
+				"invalid string: empty",
 			},
 			{
 				"string bytes: invalid",
 				[]byte("invalid"),
-				"invalid decimal string",
+				"invalid string",
 			},
 			{
 				"decimal string bytes: fractional",
 				[]byte("1231006505.0"),
-				"invalid decimal string",
+				"invalid string",
 			},
 			{
 				"decimal string bytes: exponential",
 				[]byte("1231006505e0"),
-				"invalid decimal string",
+				"invalid string",
 			},
 			{
 				"decimal string bytes: contains underscores",
 				[]byte("1_231_006_505"),
-				"invalid decimal string",
+				"invalid string",
 			},
 			{
 				"decimal string bytes: exceeds int64 range",
 				[]byte("9223372036854775808"),
-				"invalid decimal string",
+				"invalid string",
 			},
 		}
 
@@ -758,42 +758,42 @@ func TestTimestamp_JSONUnmarshaling(t *testing.T) {
 			{
 				"unquoted decimal string bytes: fractional",
 				[]byte(`1231006505.0`),
-				"invalid decimal string",
+				"invalid number",
 			},
 			{
 				"unquoted decimal string bytes: exponential",
 				[]byte(`1231006505e0`),
-				"invalid decimal string",
+				"invalid number",
 			},
 			{
 				"unquoted decimal string bytes: exceeds int64 range",
 				[]byte(`9223372036854775808`),
-				"invalid decimal string",
+				"invalid number",
 			},
 			{
 				"quoted decimal string bytes: truncated",
 				[]byte(`"0`),
-				"failed to read token",
+				"invalid string",
 			},
 			{
 				"quoted string bytes: empty",
 				[]byte(`""`),
-				"invalid decimal string: empty",
+				"invalid string: empty",
 			},
 			{
 				"quoted decimal string bytes: fractional",
 				[]byte(`"1231006505.0"`),
-				"invalid decimal string",
+				"invalid string",
 			},
 			{
 				"quoted decimal string bytes: exponential",
 				[]byte(`"1231006505e0"`),
-				"invalid decimal string",
+				"invalid string",
 			},
 			{
 				"quoted string bytes: exceeds int64 range",
 				[]byte(`"9223372036854775808"`),
-				"invalid decimal string",
+				"invalid string",
 			},
 		}
 
@@ -878,42 +878,42 @@ func TestTimestamp_UnmarshalGQL(t *testing.T) {
 			{
 				"nil",
 				nil,
-				"unsupported value: nil",
+				"unsupported input: nil",
 			},
 			{
 				"int",
 				int(0),
-				"unsupported value type: int",
+				"unsupported input type: int",
 			},
 			{
 				"string: empty",
 				"",
-				"invalid decimal string: empty",
+				"invalid string input: empty",
 			},
 			{
 				"string: invalid",
 				"invalid",
-				"invalid decimal string",
+				"invalid string input",
 			},
 			{
 				"decimal string: fractional",
 				"1231006505.0",
-				"invalid decimal string",
+				"invalid string input",
 			},
 			{
 				"decimal string: exponential",
 				"1231006505e0",
-				"invalid decimal string",
+				"invalid string input",
 			},
 			{
 				"decimal string: contains underscores",
 				"1_231_006_505",
-				"invalid decimal string",
+				"invalid string input",
 			},
 			{
 				"decimal string: exceeds int64 range",
 				"9223372036854775808",
-				"invalid decimal string",
+				"invalid string input",
 			},
 		}
 
