@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/99designs/gqlgen/graphql"
+	"go.yaml.in/yaml/v3"
 )
 
 var (
@@ -23,10 +24,12 @@ var (
 	_ encoding.TextMarshaler   = Timestamp{}
 	_ json.MarshalerTo         = Timestamp{}
 	_ json.Marshaler           = Timestamp{}
+	_ yaml.Marshaler           = Timestamp{}
 	_ graphql.Marshaler        = Timestamp{}
 	_ encoding.TextUnmarshaler = &Timestamp{}
 	_ json.UnmarshalerFrom     = &Timestamp{}
 	_ json.Unmarshaler         = &Timestamp{}
+	_ yaml.Unmarshaler         = &Timestamp{}
 	_ graphql.Unmarshaler      = &Timestamp{}
 )
 
@@ -160,6 +163,12 @@ func (ts Timestamp) MarshalJSON() ([]byte, error) {
 	return json.Marshal(ts)
 }
 
+// MarshalYAML implements [yaml.Marshaler].
+// It encodes ts as an int64 representing the Unix timestamp in seconds.
+func (ts Timestamp) MarshalYAML() (any, error) {
+	return ts.Unix(), nil
+}
+
 // MarshalGQL implements [graphql.Marshaler].
 // It encodes ts as a quoted decimal string representing the Unix timestamp in seconds and writes it to w.
 func (ts Timestamp) MarshalGQL(w io.Writer) {
@@ -209,6 +218,21 @@ func (ts *Timestamp) UnmarshalJSONFrom(dec *jsontext.Decoder) error {
 // It is like [Timestamp.UnmarshalJSONFrom] but decodes b instead of reading from a [jsontext.Decoder].
 func (ts *Timestamp) UnmarshalJSON(b []byte) error {
 	return json.Unmarshal(b, ts)
+}
+
+// UnmarshalYAML implements [yaml.Unmarshaler].
+// It decodes an unquoted or quoted decimal string representing a Unix timestamp in seconds from value into ts.
+func (ts *Timestamp) UnmarshalYAML(value *yaml.Node) error {
+	var s string
+	if err := value.Decode(&s); err != nil {
+		return fmt.Errorf("invalid node: %w", err)
+	}
+
+	if err := ts.setString(s); err != nil {
+		return fmt.Errorf("invalid node: %w", err)
+	}
+
+	return nil
 }
 
 // UnmarshalGQL implements [graphql.Unmarshaler].
