@@ -13,6 +13,7 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/stretchr/testify/require"
+	"go.yaml.in/yaml/v3"
 
 	"github.com/m0t0k1ch1-go/timeutil/v5"
 )
@@ -25,10 +26,12 @@ func TestTimestamp(t *testing.T) {
 	require.Implements(t, (*encoding.TextMarshaler)(nil), &ts)
 	require.Implements(t, (*json.MarshalerTo)(nil), &ts)
 	require.Implements(t, (*json.Marshaler)(nil), &ts)
+	require.Implements(t, (*yaml.Marshaler)(nil), &ts)
 	require.Implements(t, (*graphql.Marshaler)(nil), &ts)
 	require.Implements(t, (*encoding.TextUnmarshaler)(nil), &ts)
 	require.Implements(t, (*json.UnmarshalerFrom)(nil), &ts)
 	require.Implements(t, (*json.Unmarshaler)(nil), &ts)
+	require.Implements(t, (*yaml.Unmarshaler)(nil), &ts)
 	require.Implements(t, (*graphql.Unmarshaler)(nil), &ts)
 }
 
@@ -579,6 +582,40 @@ func TestTimestamp_JSONMarshaling(t *testing.T) {
 	})
 }
 
+func TestTimestamp_YAMLMarshaling(t *testing.T) {
+	t.Run("success", func(t *testing.T) {
+		tcs := []struct {
+			name string
+			in   timeutil.Timestamp
+			want []byte
+		}{
+			{
+				"zero",
+				timeutil.NewTimestampFromUnix(0),
+				[]byte("0\n"),
+			},
+			{
+				"positive",
+				timeutil.NewTimestampFromUnix(1231006505),
+				[]byte("1231006505\n"),
+			},
+			{
+				"negative",
+				timeutil.NewTimestampFromUnix(-1231006505),
+				[]byte("-1231006505\n"),
+			},
+		}
+
+		for _, tc := range tcs {
+			t.Run(tc.name, func(t *testing.T) {
+				b, err := yaml.Marshal(tc.in)
+				require.NoError(t, err)
+				require.Equal(t, tc.want, b)
+			})
+		}
+	})
+}
+
 func TestTimestamp_MarshalGQL(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		tcs := []struct {
@@ -863,6 +900,133 @@ func TestTimestamp_JSONUnmarshaling(t *testing.T) {
 						require.Equal(t, tc.want, ts.Time())
 					})
 				}
+			})
+		}
+	})
+}
+
+func TestTimestamp_YAMLUnmarshaling(t *testing.T) {
+	t.Run("failure", func(t *testing.T) {
+		tcs := []struct {
+			name string
+			in   []byte
+			want string
+		}{
+			{
+				"unquoted string bytes: sequence",
+				[]byte(`[]`),
+				"invalid node",
+			},
+			{
+				"unquoted string bytes: mapping",
+				[]byte(`{}`),
+				"invalid node",
+			},
+			{
+				"unquoted decimal string bytes: truncated",
+				[]byte(`0.`),
+				"invalid node",
+			},
+			{
+				"unquoted decimal string bytes: fractional",
+				[]byte(`1231006505.0`),
+				"invalid node",
+			},
+			{
+				"unquoted decimal string bytes: exponential",
+				[]byte(`1231006505e0`),
+				"invalid node",
+			},
+			{
+				"unquoted decimal string bytes: exceeds int64 range",
+				[]byte(`9223372036854775808`),
+				"invalid node",
+			},
+			{
+				"quoted string bytes: empty",
+				[]byte(`""`),
+				"invalid node: empty",
+			},
+			{
+				"quoted decimal string bytes: fractional",
+				[]byte(`"1231006505.0"`),
+				"invalid node",
+			},
+			{
+				"quoted decimal string bytes: exponential",
+				[]byte(`"1231006505e0"`),
+				"invalid node",
+			},
+			{
+				"quoted string bytes: exceeds int64 range",
+				[]byte(`"9223372036854775808"`),
+				"invalid node",
+			},
+		}
+
+		for _, tc := range tcs {
+			t.Run(tc.name, func(t *testing.T) {
+				var ts timeutil.Timestamp
+				err := yaml.Unmarshal(tc.in, &ts)
+				require.ErrorContains(t, err, tc.want)
+			})
+		}
+	})
+
+	t.Run("success", func(t *testing.T) {
+		tcs := []struct {
+			name string
+			in   []byte
+			want time.Time
+		}{
+			{
+				"unquoted decimal string bytes: zero",
+				[]byte(`0`),
+				time.Unix(0, 0).UTC(),
+			},
+			{
+				"unquoted decimal string bytes: unsigned",
+				[]byte(`1231006505`),
+				time.Unix(1231006505, 0).UTC(),
+			},
+			{
+				"unquoted decimal string bytes: signed positive",
+				[]byte(`+1231006505`),
+				time.Unix(1231006505, 0).UTC(),
+			},
+			{
+				"unquoted decimal string bytes: signed negative",
+				[]byte(`-1231006505`),
+				time.Unix(-1231006505, 0).UTC(),
+			},
+			{
+				"quoted decimal string bytes: zero",
+				[]byte(`"0"`),
+				time.Unix(0, 0).UTC(),
+			},
+			{
+				"quoted decimal string bytes: unsigned",
+				[]byte(`"1231006505"`),
+				time.Unix(1231006505, 0).UTC(),
+			},
+			{
+				"quoted decimal string bytes: signed positive",
+				[]byte(`"+1231006505"`),
+				time.Unix(1231006505, 0).UTC(),
+			},
+			{
+				"quoted decimal string bytes: signed negative",
+				[]byte(`"-1231006505"`),
+				time.Unix(-1231006505, 0).UTC(),
+			},
+		}
+
+		for _, tc := range tcs {
+			t.Run(tc.name, func(t *testing.T) {
+				var ts timeutil.Timestamp
+				err := yaml.Unmarshal(tc.in, &ts)
+				require.NoError(t, err)
+				require.Equal(t, tc.want, ts.Time())
 			})
 		}
 	})
