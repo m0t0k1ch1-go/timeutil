@@ -58,7 +58,7 @@ func (ts *Timestamp) setTime(t time.Time) {
 
 func (ts *Timestamp) setString(s string) error {
 	if len(s) == 0 {
-		return errors.New("empty")
+		return errors.New("must not be empty")
 	}
 
 	i, err := strconv.ParseInt(s, 10, 64)
@@ -126,7 +126,7 @@ func (ts *Timestamp) Scan(src any) error {
 
 	case uint64:
 		if src > math.MaxInt64 {
-			return errors.New("invalid uint64 source: exceeds int64 range")
+			return errors.New("invalid uint64 source: must not exceed the int64 range")
 		}
 
 		ts.setTime(time.Unix(int64(src), 0))

@@ -5,12 +5,13 @@ import (
 )
 
 var (
+	_ Clock = &clock{}
 	_ Clock = &MockClock{}
 )
 
 // Clock represents a time source.
 type Clock interface {
-	// Now returns a Timestamp representing the current time.
+	// Now returns a [Timestamp] representing the current time.
 	Now() Timestamp
 }
 
@@ -21,7 +22,7 @@ func NewClock() Clock {
 	return &clock{}
 }
 
-func (clk clock) Now() Timestamp {
+func (clk *clock) Now() Timestamp {
 	return NewTimestamp(time.Now())
 }
 

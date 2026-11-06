@@ -353,12 +353,12 @@ func TestTimestamp_Scan(t *testing.T) {
 			{
 				"uint64: exceeds int64 range",
 				uint64(math.MaxInt64) + 1,
-				"invalid uint64 source: exceeds int64 range",
+				"invalid uint64 source: must not exceed the int64 range",
 			},
 			{
 				"bytes: empty",
 				[]byte{},
-				"invalid bytes source: empty",
+				"invalid bytes source: must not be empty",
 			},
 			{
 				"bytes: invalid",
@@ -660,12 +660,12 @@ func TestTimestamp_UnmarshalText(t *testing.T) {
 			{
 				"nil",
 				nil,
-				"invalid string: empty",
+				"invalid string: must not be empty",
 			},
 			{
 				"bytes: empty",
 				[]byte{},
-				"invalid string: empty",
+				"invalid string: must not be empty",
 			},
 			{
 				"string bytes: invalid",
@@ -815,7 +815,7 @@ func TestTimestamp_JSONUnmarshaling(t *testing.T) {
 			{
 				"quoted string bytes: empty",
 				[]byte(`""`),
-				"invalid string: empty",
+				"invalid string: must not be empty",
 			},
 			{
 				"quoted decimal string bytes: fractional",
@@ -945,7 +945,7 @@ func TestTimestamp_YAMLUnmarshaling(t *testing.T) {
 			{
 				"quoted string bytes: empty",
 				[]byte(`""`),
-				"invalid node: empty",
+				"invalid node: must not be empty",
 			},
 			{
 				"quoted decimal string bytes: fractional",
@@ -1052,7 +1052,7 @@ func TestTimestamp_UnmarshalGQL(t *testing.T) {
 			{
 				"string: empty",
 				"",
-				"invalid string input: empty",
+				"invalid string input: must not be empty",
 			},
 			{
 				"string: invalid",
