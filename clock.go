@@ -11,7 +11,7 @@ var (
 
 // Clock represents a time source.
 type Clock interface {
-	// Now returns a [Timestamp] representing the current time.
+	// Now returns a Timestamp representing the current time.
 	Now() Timestamp
 }
 
