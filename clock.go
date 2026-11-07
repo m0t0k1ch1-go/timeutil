@@ -5,6 +5,7 @@ import (
 )
 
 var (
+	_ Clock = &clock{}
 	_ Clock = &MockClock{}
 )
 
@@ -21,7 +22,7 @@ func NewClock() Clock {
 	return &clock{}
 }
 
-func (clk clock) Now() Timestamp {
+func (clk *clock) Now() Timestamp {
 	return NewTimestamp(time.Now())
 }
 
